@@ -1,0 +1,134 @@
+trigger:
+  paths:
+   exclude:
+     - README.md
+     - .gitignore
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: windows-2022
+
+variables:
+  BuildConfiguration: 'release'
+  PackNuGetDirectory: '$(Build.ArtifactStagingDirectory)/NuGet'
+  PackageVersionPreRelease: '$(Build.BuildNumber)-alpha'
+  PackageVersionRelease: '$(Build.BuildNumber)'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '6.0.x'
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '7.0.x'
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '9.0.x'
+    includePreviewVersions: true
+
+- task: oneLuckiDevJson2Variable@1
+  displayName: 'Get version'
+  inputs:
+    jsonFile: 'version.json'
+    shouldPrefixVariables: false
+
+- task: replacetokens@4
+  displayName: 'Replace tokens'
+  inputs:
+    targetFiles: |
+      **/*.json
+      **/*.md
+      **/*.props
+    encoding: 'auto'
+    tokenPattern: 'custom'
+    tokenPrefix: '~('
+    tokenSuffix: ')~'
+    writeBOM: true
+    verbosity: 'detailed'
+    actionOnMissing: 'fail'
+    keepToken: false
+    actionOnNoFiles: 'continue'
+    enableTransforms: false
+    useLegacyPattern: false
+    enableTelemetry: false
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore all projects'
+  inputs:
+    command: 'restore'
+    projects: '**/Accelergreat.sln'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build all projects'
+  inputs:
+    command: 'build'
+    projects: '**/Accelergreat.sln'
+    arguments: '--configuration $(BuildConfiguration) --no-restore'
+
+- task: DotNetCoreCLI@2
+  displayName: "Run web API tests"
+  condition: false
+  inputs:
+    command: 'test'
+    projects: '**/Accelergreat.Tests.Api.csproj'
+    arguments: '--configuration $(BuildConfiguration) --no-build --collect "Code Coverage"'
+
+- task: DotNetCoreCLI@2
+  displayName: "Run SQL Server tests (standard)"
+  condition: false
+  inputs:
+    command: 'test'
+    projects: '**/Accelergreat.Tests.EntityFramework.SqlServer.csproj'
+    arguments: '--configuration $(BuildConfiguration) --no-build --collect "Code Coverage"'
+
+- task: DotNetCoreCLI@2
+  displayName: "Run SQL Server tests (migrations)"
+  condition: false
+  inputs:
+    command: 'test'
+    projects: '**/Accelergreat.Tests.EntityFramework.SqlServer.Migrations.csproj'
+    arguments: '--configuration $(BuildConfiguration) --no-build --collect "Code Coverage"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Pack NuGet packages'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'src/**/*.csproj'
+    packDirectory: '$(PackNuGetDirectory)'
+    nobuild: true
+    versioningScheme: 'off'
+
+- task: DocFxTask@0
+  displayName: 'Build documentation website'
+  inputs:
+    solution: '.'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish NuGet packages'
+  inputs:
+    PathtoPublish: '$(PackNuGetDirectory)'
+    ArtifactName: 'nuget'
+    publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish documentation website'
+  inputs:
+    PathtoPublish: '_site'
+    ArtifactName: 'documentation'
+    publishLocation: 'Container'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish configuration schema'
+  inputs:
+    PathtoPublish: 'configuration/schema.json'
+    ArtifactName: 'configuration_schema'
+    publishLocation: 'Container'

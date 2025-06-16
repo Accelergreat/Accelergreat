@@ -1,0 +1,7 @@
+{
+  "$schema": "https://cdn.accelergreat.net/configuration/0.2.5/schema.json",
+  "SqlServerEntityFramework": {
+    "ConnectionString": "Server=DESKTOP-JCD4HMS\\SQLEXPRESS;TrustServerCertificate=True",
+    "ResetStrategy": "Transactions"
+  }
+}

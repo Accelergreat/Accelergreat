@@ -1,0 +1,10 @@
+﻿<Project>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NETSDK1138;xUnit1041</NoWarn>
+  </PropertyGroup>
+  <Target Name="AddUseAccelergreatXunitTestFrameworkAttribute" BeforeTargets="BeforeCompile">
+    <ItemGroup>
+      <AssemblyAttribute Include="Accelergreat.Xunit.Attributes.UseAccelergreatXunitTestFramework" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <PackageId>Accelergreat.Web</PackageId>
+		<PackageDescription>Accelergreat web app testing tools. Accelergreat is an integration testing package that helps to simplify and speed up the writing of integration tests, as well as taking away the challenging task of managing external dependencies.</PackageDescription>
+		<PackageTags>Integration;Testing;IntegrationTesting;Web;API;App;WebApi;WebApp;Accelergreat</PackageTags>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+  </ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Accelergreat\Accelergreat.csproj" />
+	</ItemGroup>
+
+</Project>

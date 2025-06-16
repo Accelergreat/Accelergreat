@@ -1,0 +1,30 @@
+﻿<Project>
+  <PropertyGroup>
+    <Nullable>Enable</Nullable>
+    <ImplicitUsings>Enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <DisabledWarnings>1591</DisabledWarnings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile></DocumentationFile>
+    <Company>Nanogunn Ltd</Company>
+    <Authors>Nanogunn Ltd</Authors>
+    <PackageProjectUrl>https://accelergreat.net</PackageProjectUrl>
+    <Product>Accelergreat</Product>
+    <Description>Accelergreat is an integration testing package that helps to simplify and speed up the writing of integration tests, as well as taking away the challenging task of managing external dependencies.</Description>
+    <PackageIconUrl>https://cdn.accelergreat.net/images/accelergreat_icon.png</PackageIconUrl>
+    <PackageIcon>accelergreat_icon.png</PackageIcon>
+    <PackageReadmeFile>index.md</PackageReadmeFile>
+		<NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Version>~(version)~</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../accelergreat_icon.png" Pack="true" PackagePath="" />
+    <None Include="../../index.md" Pack="true" PackagePath="" />
+    <None Include="../../components.md" Pack="true" PackagePath="" />
+    <None Include="../../microservices.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

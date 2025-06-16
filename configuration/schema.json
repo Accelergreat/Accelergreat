@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft-06/schema",
+  "$id": "https://cdn.accelergreat.net/configuration/~(version)~/schema.json",
+  "title": "Accelergreat configuration",
+  "version": "~(version)~",
+  "description": "Schema for overriding Accelergreat configuration values.",
+  "type": "object",
+  "properties": {
+    "SqlServerEntityFramework": {
+      "description": "Configuration values for SQL Server databases created via Entity Framework.",
+      "type": "object",
+      "properties": {
+        "ConnectionString": {
+          "description": "Target connection string for test databases",
+          "type": "string",
+          "default": null
+        },
+        "ResetStrategy": {
+          "description": "The strategy to take when resetting a SQL database.",
+          "type": "string",
+          "enum": [
+            "SnapshotRollback",
+            "Transactions"
+          ]
+        },
+        "CreateStrategy": {
+          "description": "The strategy to take when creating a SQL database.",
+          "type": "string",
+          "enum": [
+            "TypeConfigurations",
+            "Migrations"
+          ]
+        },
+        "SnapshotDirectory": {
+          "description": "The directory where SQL database snapshots are stored. Temp path will be used if not specified.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+﻿<Project>
+  <PropertyGroup>
+    <Nullable>Enable</Nullable>
+    <ImplicitUsings>Enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+		<NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+  </PropertyGroup>
+</Project>

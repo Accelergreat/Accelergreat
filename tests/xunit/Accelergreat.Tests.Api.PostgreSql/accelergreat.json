@@ -1,0 +1,15 @@
+{
+  "$schema": "https://cdn.accelergreat.net/configuration/1.4.0-beta/schema.json",
+  "License": {
+    "ClientId": "HGEM",
+    "ClientSecret": "G>>POw&bt0VGAMKW7-W7u@Q4OEY]h#VMcMF^~F6k&>y2uhy8Ju,8v+Pj+u-xJh?m"
+  },
+  "PostgreSqlEntityFramework": {
+    "Username": "postgres",
+    "Password": "postgres",
+    "Host": "localhost",
+    "Port": 5432,
+    "ResetStrategy": "Transactions",
+    "PostgreSqlBinDirectory": "C:\\Program Files\\PostgreSQL\\14\\bin"
+  }
+}

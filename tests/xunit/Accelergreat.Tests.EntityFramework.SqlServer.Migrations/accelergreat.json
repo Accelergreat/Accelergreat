@@ -1,0 +1,9 @@
+{
+  "$schema": "https://cdn.accelergreat.net/configuration/0.2.5/schema.json",
+  "SqlServerEntityFramework": {
+    "ConnectionString": "Server=DESKTOP-JCD4HMS\\SQLEXPRESS;Pooling=True;TrustServerCertificate=True",
+    "ResetStrategy": "SnapshotRollback",
+    "CreateStrategy": "Migrations",
+    "SnapshotDirectory": "C:\\Temp\\Snapshots"
+  }
+}
