@@ -2,416 +2,538 @@
 uid: DeveloperDocumentation.Index
 ---
 
-# Ultra Fast Integration Tests
+# ⚡ Accelergreat 4.0 - Ultra Fast Integration Tests
 
-**Accelergreat your tests.**
+**The fastest way to write and run integration tests in .NET**
 
-Write and execute efficient and high-performance integration tests with ease. Accelergreat is a powerful .NET integration testing solution that automatically provisions and manages external dependencies for your tests, such as databases and APIs. Simplify your integration testing development process today.
+Stop fighting with slow, brittle integration tests. Accelergreat automatically manages your test dependencies, runs tests in parallel, and resets databases in milliseconds. Focus on writing great tests, not test infrastructure.
 
-## Overview
+## 🚀 Why Developers Love Accelergreat
 
-Accelergreat is a new and innovative testing platform designed to make integration testing easier.
+### Lightning Fast Database Resets
+- **Transactions Mode**: 0-3ms database resets using savepoints
+- **Parallel Execution**: Tests run simultaneously across multiple environments
+- **Smart Pooling**: Intelligent resource management scales with your machine
 
-Integration tests are essential to ensuring your code works and stays working. However, they have been challenging to write and run quickly in the past, earning a reputation as a problem area in the development world.
+### Zero Boilerplate
+- **Auto-managed Dependencies**: Databases, APIs, and services configured automatically
+- **Clean Test Code**: No setup/teardown code cluttering your tests
+- **Familiar APIs**: Works with your existing xUnit knowledge
 
-With Accelergreat we intend to make this a problem of the past by doing all the hard work for you.
+### Production-Ready
+- **Multiple Database Providers**: SQL Server, SQLite 
+- **Microservices Support**: Test complex multi-service scenarios
+- **Environment Configuration**: Development and CI configs
 
-Accelergreat currently supports [xUnit](https://xunit.net/) and plans to support other test runners in the future.
+---
 
-## NuGet Packages
+## 🎯 Quick Start (2 minutes)
 
-[![nuget v~(version)~](https://img.shields.io/badge/nuget-v~(version)~-blue)](https://www.nuget.org/profiles/Nanogunn) ![net6.0 | net7.0](https://img.shields.io/badge/dotnet-net6.0%20%7C%20net7.0%20%7C%20net8.0-red)
-
-Accelergreat has a range of nuget packages for different feature sets:
-
-### Core packages
-
-| Package |   |
-| ------- | - |
-| [`Accelergreat`](https://www.nuget.org/packages/Accelergreat) | Referenced by all other Accelergreat packages. You can also reference this package to make your own custom Accelergreat components. |
-| [`Accelergreat.EntityFramework`](https://www.nuget.org/packages/Accelergreat.EntityFramework) | Core Entity Framework package referenced by Accelergreat's Entity Framework packages. |
-
-### Test framework packages
-
-The test framework packages contain Accelergreat's test framework specific code. All other packages can be used interchangeably with each test framework package. 
-
-| Framework | Package |
-| --------- | ------- |
-| [xUnit](https://xunit.net/) | [`Accelergreat.Xunit`](https://www.nuget.org/packages/Accelergreat.Xunit) |
-
-### Application packages
-
-Accelergreat can run instances of your application. 
-
-| Application type | Package |
-| ---------------- | ------- |
-| Web API | [`Accelergreat.Web`](https://www.nuget.org/packages/Accelergreat.Web) |
-
-### Entity Framework packages
-
-Accelergreat supports different database providers with the following entity framework packages. Accelergreat fully manages databse creation, reset between tests and cleanup at the end of the test run.
-
-| Provider | Package |
-| :-------- | ------- |
-| Sql Server | [`Accelergreat.EntityFramework.SqlServer`](https://www.nuget.org/packages/Accelergreat.EntityFramework.SqlServer) |
-| Postgre SQL | [`Accelergreat.EntityFramework.PostgreSql`](https://www.nuget.org/packages/Accelergreat.EntityFramework.PostgreSql) |
-| Sqlite | [`Accelergreat.EntityFramework.Sqlite`](https://www.nuget.org/packages/Accelergreat.EntityFramework.Sqlite) |
-| In Memory | [`Accelergreat.EntityFramework.InMemory`](https://www.nuget.org/packages/Accelergreat.EntityFramework.InMemory) |
-
-### Future packages
-
-Accelergreat is growing and open to requests. See [Community & Support](#community--support) for how to get in touch.
-
-### Version Compatibility
-
-Accelergreat follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) for releases.
-
-Accelergreat keeps up-to date with dotnet releases and each major version will support all currently in-support versions of dotnet at the time of release.
-
-Accelergreat will not introduce amy breaking public API changes for minor and patch versions.
-
-# Getting started (xUnit)
-
-Getting startes is easy, whether you are starting a new test project, or want to migrate an existing one.
-
-## High level steps
-
-1. **Install** [`Accelergreat.Xunit`](https://www.nuget.org/packages/Accelergreat.Xunit) in your test project.
-
-    ```shell
+### 1. Install Accelergreat
+```bash
     dotnet add package Accelergreat.Xunit
-    ```
+dotnet add package Accelergreat.EntityFramework.SqlServer
+```
 
-2. **Define** components needed.
-
-    One of the core features of Accelergreat is the concept of components. A component represents a dependency for your tests. For example a database or a web API.
-
-    Accelergreat offers a range of pre-built components that can be extended for your specific needs. Or, you can build your own components by implementing the `IAccelergreatComponent` interface.
-
-    To further understand components beyond what the getting started guide explains, the different components Accelergreat offers and to understand how to build your own components. See the dedicated guide on [components](components.md).
-
-3. **Configure** the environment
-
-    Configure the environment by registering components in a startup class that implements the `IAccelergreatStartup` interface. Just like how you setup dependency injection for your application, Accelergreat uses dependency injection for environment and component resolution for your tests.
-
-4. Write your tests! 🚀
-
-
-## Detailed steps (example use case)
-Accelergreat has been designed with modularity and flexibility in mind. Whilst the example we have provided below may not match your specific use case, this example was chosen to best show the capabilities of Accelergreat. It should be an effective reference point for your own implementations.
-
-**Use case example:** Database (Entity Framework SQL Server) + Web API integration test
-
-**To see other examples**, you can look on our [GitHub examples repo](https://github.com/Accelergreat/Examples).
-
-#### 1. Install the required packages
-
-- [`Accelergreat.EntityFramework.SqlServer`](https://www.nuget.org/packages/Accelergreat.EntityFramework.SqlServer)
-    ```shell
-    dotnet add package Accelergreat.EntityFramework.SqlServer
-    ```
-- [`Accelergreat.Web`](https://www.nuget.org/packages/Accelergreat.Web)
-    ```shell
-    dotnet add package Accelergreat.Web
-    ```
-
-#### 2. Create the Accelergreat Components
-In our example we only need two components. One for our SQL Server database, and one for our Web API.
-
-##### **Database component**
-Create a class that inherits from [`SqlServerEntityFrameworkDatabaseComponent`](xref:Accelergreat.EntityFramework.SqlServer.SqlServerEntityFrameworkDatabaseComponent`1).
-
-If you need to override any of the configuration values, see [`SqlServerEntityFrameworkConfiguration`](xref:Accelergreat.EntityFramework.SqlServer.SqlServerEntityFrameworkConfiguration) for the defaults.
-
-``` C#
-using Accelergreat.EntityFramework.SqlServer;
-using Microsoft.Extensions.Configuration;
-
-namespace ExampleTestProject.Components;
-
-public class ExampleDatabaseComponent : SqlServerEntityFrameworkDatabaseComponent<ExampleDbContext>
+### 2. Configure Components
+```csharp
+public class Startup : IAccelergreatStartup
 {
-    public ExampleDatabaseComponent(IConfiguration configuration) : base(configuration)
+    public void Configure(IAccelergreatBuilder builder)
+    {
+        builder.AddAccelergreatComponent<ProductDatabaseComponent>();
+        builder.AddAccelergreatComponent<ProductApiComponent>();
+    }
+}
+
+public class ProductDatabaseComponent : SqlServerEntityFrameworkDatabaseComponent<ProductDbContext>
+{
+    public ProductDatabaseComponent(IConfiguration configuration) : base(configuration)
     {
     }
 }
 ```
 
-##### **Web API component**
-To interact with a .NET Web API in our integration tests, we need to create a Web App Component.
+### 3. Create Your First Test
+```csharp
+public class ProductTests : AccelergreatXunitTest
+{
+    public ProductTests(IAccelergreatEnvironmentPool environmentPool) : base(environmentPool)
+    {
+    }
 
-Web app components run an instance of the API defined by the Web API startup class passed into the generic type parameter. The following steps will set up a component for you:
+    [Fact]
+    public async Task CreateProduct_ShouldPersistToDatabase()
+    {
+        // Arrange - Get auto-managed database
+        var dbContext = GetComponent<ProductDatabaseComponent>().DbContextFactory.NewDbContext();
+        var product = new Product { Name = "Test Product", Price = 99.99m };
 
-1. Create a class derived from [`WebAppComponent`](xref:Accelergreat.Web.WebAppComponent`1).
-2. Inject the database connection string(s).
-3. [Optional] overriding appsettings.
+        // Act
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync();
 
-Create the class derived from [`WebAppComponent`](xref:Accelergreat.Web.WebAppComponent`1)
- 
-To create a Web App Component, create a class that inherits from [`WebAppComponent`](xref:Accelergreat.Web.WebAppComponent`1) and pass in your Web API startup class as the generic type parameter.
+        // Assert
+        var saved = await dbContext.Products.FindAsync(product.Id);
+        saved.Should().NotBeNull();
+        saved.Name.Should().Be("Test Product");
+        
+        // Database automatically resets after each test!
+    }
+}
+```
 
-**Using an API startup class**
-``` C#
-using System.Collections.Generic;
-using Accelergreat.Web;
-using Accelergreat.Web.Extensions;
-using Microsoft.Extensions.Configuration;
+### 4. Run Tests
+```bash
+dotnet test
+```
 
-namespace ExampleTestProject.Components;
+That's it! Your tests now run in parallel with ultra-fast database resets.
 
-public class ExampleApiComponent : WebAppComponent<ExampleApi.Startup>
+---
+
+## 🏗️ NuGet Packages
+
+[![NuGet](https://img.shields.io/badge/nuget-v4.0.0-blue)](https://www.nuget.org/profiles/Nanogunn) ![.NET](https://img.shields.io/badge/.NET-6%20%7C%207%20%7C%208%20%7C%209-purple)
+
+### Core Packages
+| Package | Description |
+|---------|-------------|
+| **[Accelergreat.Xunit](https://www.nuget.org/packages/Accelergreat.Xunit)** | xUnit integration & test framework |
+| **[Accelergreat](https://www.nuget.org/packages/Accelergreat)** | Core package for custom components |
+
+### Database Packages
+| Database | Package |
+|----------|---------|
+| **SQL Server** | [Accelergreat.EntityFramework.SqlServer](https://www.nuget.org/packages/Accelergreat.EntityFramework.SqlServer) |
+| **SQLite** | [Accelergreat.EntityFramework.Sqlite](https://www.nuget.org/packages/Accelergreat.EntityFramework.Sqlite) |
+
+
+### Application Packages
+| Type | Package |
+|------|---------|
+| **Web APIs** | [Accelergreat.Web](https://www.nuget.org/packages/Accelergreat.Web) |
+
+> **✨ New in v4.0**: Full .NET 9 support, enhanced performance, improved diagnostics
+
+---
+
+## 🧩 Component Architecture
+
+Components are the heart of Accelergreat. They represent your test dependencies and handle all the heavy lifting.
+
+### Database Components
+
+#### SQL Server with Lightning-Fast Resets
+```csharp
+public class OrderDatabaseComponent : SqlServerEntityFrameworkDatabaseComponent<OrderDbContext>
+{
+    public OrderDatabaseComponent(IConfiguration configuration) : base(configuration)
+    {
+    }
+
+    // Optional: Add global test data
+    protected override async Task OnDatabaseInitializedAsync(OrderDbContext context)
+    {
+        context.Categories.Add(new Category { Name = "Electronics" });
+        await context.SaveChangesAsync();
+    }
+}
+```
+
+#### Configuration for Different Environments
+```json
+// accelergreat.development.json
+{
+  "SqlServerEntityFramework": {
+    "ResetStrategy": "Transactions",  // 0-3ms resets!
+    "CreateStrategy": "Migrations"
+  }
+}
+
+// accelergreat.ci.json  
+{
+  "SqlServerEntityFramework": {
+    "ResetStrategy": "SnapshotRollback",  // 80-150ms resets
+    "ConnectionString": "Server=ci-server;Database=TestDb;..."
+  }
+}
+```
+
+### Web API Components
+
+#### Test Your APIs Effortlessly
+```csharp
+public class OrderApiComponent : WebAppComponent<OrderApi.Startup>
 {
     protected override void BuildConfiguration(
         IConfigurationBuilder configurationBuilder,
-        IReadOnlyAccelergreatEnvironmentPipelineData accelergreatEnvironmentPipelineData)
+        IReadOnlyAccelergreatEnvironmentPipelineData environmentData)
     {
-        configurationBuilder.AddEntityFrameworkDatabaseConnectionString<ExampleDbContext>(
-            "ExampleConnectionStringName", accelergreatEnvironmentPipelineData);
+        // Auto-inject database connection
+        configurationBuilder.AddEntityFrameworkDatabaseConnectionString<OrderDbContext>(
+            "DefaultConnection", environmentData);
     }
 }
 ```
-**Using an API program class**
 
-With the recent introduction of using the program.cs file to replace the startup class, you can now configure your application entirely in Program.cs . The Progam class is now in the global
-App Domain as an internal class of the Api assembly.  If you are using miniminal apis then you will have to expose `InternalsVisibleTo` to the Test Assembly by editing the csproj file of the Api project:
-
-``` xml
-<Project Sdk="Microsoft.NET.Sdk.Web">
-
-...
-
-	<ItemGroup>
-		<InternalsVisibleTo Include="ExampleTestProject" />
-	</ItemGroup>
-...
-
+#### Modern .NET 6+ Program.cs Support
+```csharp
+public class OrderApiComponent : WebAppComponent<Program>
+{
+    protected override void BuildConfiguration(
+        IConfigurationBuilder configurationBuilder,
+        IReadOnlyAccelergreatEnvironmentPipelineData environmentData)
+    {
+        configurationBuilder.AddEntityFrameworkDatabaseConnectionString<OrderDbContext>(
+            "DefaultConnection", environmentData);
+    }
+}
 ```
 
-``` C#
-using System;
-using System.Collections.Generic;
-using Accelergreat.EntityFramework.Extensions;
-using Accelergreat.Environments;
-using Accelergreat.Web;
-using GuestAndActivities.Data.Contexts;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-
-namespace ExampleTestProject.Components;
-
-internal class ExampleApiComponent : WebAppComponent<Program>
+### Microservices Components
+```csharp
+public class PaymentServiceComponent : KestrelWebAppComponent<PaymentService.Program>
 {
-
     protected override void BuildConfiguration(
             IConfigurationBuilder configurationBuilder,
-            IReadOnlyAccelergreatEnvironmentPipelineData accelergreatEnvironmentPipelineData)
+        IReadOnlyAccelergreatEnvironmentPipelineData environmentData)
     {
-        configurationBuilder.AddEntityFrameworkDatabaseConnectionString<ExampleDbContext>(
-            "ExampleConnectionStringName", accelergreatEnvironmentPipelineData);
+        var orderServiceUrl = environmentData.GetKestrelWebAppHttpBaseAddress<OrderService.Program>();
+        configurationBuilder.AddInMemoryCollection(new[] {
+            new KeyValuePair<string, string>("OrderService:BaseUrl", orderServiceUrl)
+        });
     }
 }
 ```
 
+---
 
-**Inject the database connection string(s)**
+## ⚡ Performance Features
 
-In the examples above, we need to provide the database connection string to the Web API configuration a database connection string. We do this by overriding > [`BuildConfiguration`](xref:Accelergreat.Web.WebAppComponent`1.BuildConfiguration(Microsoft.Extensions.Configuration.IConfigurationBuilder,Accelergreat.Environments.IReadOnlyAccelergreatEnvironmentPipelineData)) and calling [`configurationBuilder.AddEntityFrameworkDatabaseConnectionString`](xref:Accelergreat.EntityFramework.Extensions.ConfigurationBuilderExtensions.AddEntityFrameworkDatabaseConnectionString``1(Microsoft.Extensions.Configuration.IConfigurationBuilder,System.String,Accelergreat.Environments.IReadOnlyAccelergreatEnvironmentPipelineData)).
+### 1. Parallel Test Execution
+Accelergreat works with xUnit's parallel execution through intelligent environment pooling:
 
+```json
+// xunit.runner.json
+{
+  "maxParallelThreads": 4,
+  "parallelizeTestCollections": true
+}
+```
 
-#### 3. Create a `Startup` class
+**Results**: Up to 5x faster test execution on multi-core machines!
 
-Create a `Startup` class in your test project that implements [`IAccelergreatStartup`](xref:Accelergreat.Xunit.IAccelergreatStartup).
+### 2. Ultra-Fast Database Resets
 
-we need to register our components. In the `Configure` implementation, call [`builder.AddAccelergreatComponent`](xref:Accelergreat.Xunit.Extensions.ServiceCollectionExtensions.AddAccelergreatComponent``1(Microsoft.Extensions.DependencyInjection.IServiceCollection)) for each component as the type parameter.
+#### Transaction Mode - 0-3ms
+```json
+{
+  "SqlServerEntityFramework": {
+    "ResetStrategy": "Transactions"
+  }
+}
+```
+Uses savepoints for instant rollbacks. Perfect for development.
 
-**Important**
-The order in which components are initialized is defined by the order they are registered.
+#### Snapshot Mode - 80-150ms
+```json
+{
+  "SqlServerEntityFramework": {
+    "ResetStrategy": "SnapshotRollback"
+  }
+}
+```
+Creates database snapshots for reliable resets. Great for CI.
 
-In our example, we need to initialize the database before the web API so that it can access the database connection string.
+### 3. Environment Pooling
+```csharp
+// Automatically manages test environments
+- Environment [1] allocated  
+- Environment [2] allocated
+- Environment [3] allocated
+// Tests run in parallel across environments
+```
 
-``` C#
-using Accelergreat.Xunit;
-using ExampleTestProject.Components;
+---
 
-namespace ExampleTestProject;
+## 🔧 Advanced Features
+
+### Transaction Overriding
+Handle nested transactions in your application code:
+
+```csharp
+builder.ConfigureServices(services =>
+{
+    services.AddAccelergreatDbContext<OrderDbContext>(
+        environmentData, 
+        useTransactionOverriding: true  // Handles nested transactions
+    );
+});
+```
+
+### Custom Components
+Build your own components for specific needs:
+
+```csharp
+public class RedisComponent : IAccelergreatComponent
+{
+    private ConnectionMultiplexer _redis;
+
+    public async Task InitializeAsync(IAccelergreatEnvironmentPipelineData environmentData)
+    {
+        _redis = await ConnectionMultiplexer.ConnectAsync("localhost:6379");
+        environmentData.Add("RedisConnection", _redis);
+    }
+
+    public async Task ResetAsync()
+    {
+        await _redis.GetDatabase().FlushDatabaseAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _redis.DisposeAsync();
+    }
+}
+```
+
+### Environment-Based Configuration
+```csharp
+// Set environment via environment variable
+Environment.SetEnvironmentVariable("ACCELERGREAT_ENVIRONMENT", "development");
+
+// Or configure via user secrets
+dotnet user-secrets set "ACCELERGREAT:SqlServerEntityFramework:ResetStrategy" "Transactions"
+```
+
+---
+
+## 🎨 Complete Example
+
+Here's a full example showing Accelergreat's power:
+
+```csharp
+public class ECommerceIntegrationTests : AccelergreatXunitTest
+{
+    public ECommerceIntegrationTests(IAccelergreatEnvironmentPool environmentPool) : base(environmentPool)
+    {
+    }
+
+    [Fact]
+    public async Task PlaceOrder_ShouldProcessPaymentAndUpdateInventory()
+    {
+        // Arrange
+        var dbContext = GetComponent<ECommerceDatabaseComponent>().DbContextFactory.NewDbContext();
+        var httpClient = GetComponent<ECommerceApiComponent>().CreateClient();
+        
+        // Add test product
+        var product = new Product { Name = "Gaming Laptop", Price = 1299.99m, Stock = 10 };
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var response = await httpClient.PostAsJsonAsync("/api/orders", new
+        {
+            ProductId = product.Id,
+            Quantity = 2,
+            CustomerEmail = "test@example.com"
+        });
+
+        // Assert
+        response.Should().BeSuccessful();
+        
+        var order = await response.Content.ReadFromJsonAsync<Order>();
+        order.Should().NotBeNull();
+        order.Total.Should().Be(2599.98m);
+        
+        // Verify database changes
+        var updatedProduct = await dbContext.Products.FindAsync(product.Id);
+        updatedProduct.Stock.Should().Be(8);  // Stock decreased
+        
+        var savedOrder = await dbContext.Orders.FindAsync(order.Id);
+        savedOrder.Should().NotBeNull();
+        savedOrder.Status.Should().Be(OrderStatus.Processing);
+    }
+}
 
 public class Startup : IAccelergreatStartup
 {
     public void Configure(IAccelergreatBuilder builder)
     {
-        builder.AddAccelergreatComponent<ExampleDatabaseComponent>();
-        builder.AddAccelergreatComponent<ExampleApiComponent>();
+        builder.AddAccelergreatComponent<ECommerceDatabaseComponent>();
+        builder.AddAccelergreatComponent<ECommerceApiComponent>();
     }
 }
 ```
 
-#### 4. Write your first Accelegreat Integration Test
-
-Now that we've got everything set up, we're going to write our first test.
-
-For this example, we'll also be using [FluentAssertions](https://github.com/fluentassertions/fluentassertions) to keep our assertion code clean and easy to read. We'll also follow the Arrange Act Assert (AAA) pattern:
-
-**Arrange** Set up and insert our test data
-
-**Act** Call the API endpoint
-
-**Assert** Validate that the response data is correct
-
-Create a test that that inherits from [`AccelergreatXunitTest`](xref:Accelergreat.Xunit.AccelergreatXunitTest).
-
-``` C#
-using System.Threading.Tasks;
-using Accelergreat.Environments.Pooling;
-using Accelergreat.Xunit;
-using ExampleTestProject.Components;
-using FluentAssertions;
-using Newtonsoft.Json;
-using Xunit;
-
-namespace ExampleTestProject.Tests;
-
-public class ExampleTests : AccelergreatXunitTest
-{
-    public ExampleTests(IAccelergreatEnvironmentPool environmentPool) : base(environmentPool)
-    {
-    }
-
-    [Fact]
-    public async Task Examples_GetById_ReturnsCorrectExample()
-    {
-        // Arrange
-        var exampleEntity = new ExampleEntity();
-
-        var dbContextFactory = GetComponent<ExampleDatabaseComponent>().DbContextFactory;
-
-        await using (var context = dbContextFactory.NewDbContext())
-        {
-            context.Set<ExampleEntity>().Add(exampleEntity);
-
-            await context.SaveChangesAsync();
-        }
-
-        var httpClient = GetComponent<ExampleApiComponent>().CreateClient();
-
-        // Act
-        var httpResponseMessage = await httpClient.GetAsync($"examples/{exampleEntity.Id}");
-
-        // Assert
-        httpResponseMessage.IsSuccessStatusCode.Should().BeTrue();
-
-        var body = await httpResponseMessage.Content.ReadAsStringAsync();
-
-        var result = JsonConvert.DeserializeObject<ExampleEntity>(body)!;
-
-        result.Id.Should().Be(exampleEntity.Id);
-    }
-}
-```
-
-## Extensibility
-
-
-
-To further understand components beyond what the below getting started guide shows, read about all the different components Accelergreat offers and to understand how to build your own components. Please follow [this guide](components.md).
-
-
-## Configuration
-
-Accelergreat supports the overriding of configuration for managed external dependencies such as databases.
-
-Accelergreat will read the following files in the root level of your test projects that have the `CopyToOutputDirectory` setting set to `Always` or `PreserveNewest`:
-
-- `accelergreat.json`
-- `accelergreat.{environment}.json`
-
-`accelergreat.{environment}.json` is supported to allow you to have different configurations for your local machine and CI pipeline.
-
-`{environment}` is defined by setting an environment variable called `ACCELERGREAT_ENVIRONMENT`.
-
-A schema has been provided for the configuration files:
-
-``` json
-{
-    "$schema": "https://cdn.accelergreat.net/configuration/~(version)~/schema.json#"
-}
-```
 ---
 
-### Example
+## 🚀 Migration Guide
 
-In the development environment, the developer wants to run their application in memory to be able to make use of Visual Studio debugging tools, and also make use of faster database reset speed by using the Transactions reset strategy.
-
-- `accelergreat.development.json`
-    ```json
+### From Traditional Integration Tests
+```csharp
+// Before: Manual Entity Framework setup/teardown
+public class OrderTests : IClassFixture<DatabaseFixture>
+{
+    private readonly DatabaseFixture _fixture;
+    
+    public OrderTests(DatabaseFixture fixture)
     {
-        "$schema": "https://cdn.accelergreat.net/configuration/~(version)~/schema.json#",
-        "Infrastructure": { // Custom config
-            "Setup": "InMemory"
-        },
-        "SqlServerEntityFramework": {
-            "ResetStrategy": "Transactions"
-        }
+        _fixture = fixture;
     }
-    ```
-
-In the CI environment, the developer wants to run their tests against the docker container that will be deployed to the hosted environments. In this case, the developer is using [IL-trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trimming-option) in the dotnet publish step of their Dockerfile.
-
-- `accelergreat.CI.json`
-    ```json
+    
+    [Fact]
+    public async Task Test()
     {
-        "$schema": "https://cdn.accelergreat.net/configuration/~(version)~/schema.json#",
-        "Infrastructure": { // Custom config
-            "Setup": "Containers"
-        },
-        "SqlServerEntityFramework": {
-            "ResetStrategy": "SnapshotRollback"
-        }
+        using var dbContext = _fixture.CreateDbContext();
+        
+        // Manual cleanup before test
+        dbContext.Orders.RemoveRange(dbContext.Orders);
+        dbContext.Products.RemoveRange(dbContext.Products);
+        await dbContext.SaveChangesAsync();
+        
+        // Test code
+        var product = new Product { Name = "Test" };
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync();
+        
+        // Manual cleanup after test (or risk affecting other tests)
+        dbContext.Orders.RemoveRange(dbContext.Orders);
+        dbContext.Products.RemoveRange(dbContext.Products);
+        await dbContext.SaveChangesAsync();
     }
-    ```
+}
 
-On their local machine, the developer would set the `ACCELERGREAT_ENVIRONMENT` environment variable with value `development`, in the CI environment, the value would be `CI`.
+// After: Accelergreat handles everything
+[Fact]
+public async Task Test()
+{
+    var dbContext = GetComponent<TestDatabaseComponent>().DbContextFactory.NewDbContext();
+    
+    // Test code - database auto-resets between tests!
+    var product = new Product { Name = "Test" };
+    dbContext.Products.Add(product);
+    await dbContext.SaveChangesAsync();
+    
+    // No cleanup needed - next test gets fresh database
+}
+```
+
+### From WebApplicationFactory
+```csharp
+// Before: Manual WebApplicationFactory
+public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+    
+    public ApiTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
+}
+
+// After: Accelergreat component
+public class ApiTests : AccelergreatXunitTest
+{
+    public ApiTests(IAccelergreatEnvironmentPool environmentPool) : base(environmentPool)
+    {
+    }
+    
+    [Fact]
+    public async Task Test()
+    {
+        var client = GetComponent<ApiComponent>().CreateClient();
+        // Test with auto-configured database!
+    }
+}
+```
+
+---
+
+## 🎯 Best Practices
+
+### 1. Component Order Matters
+```csharp
+public void Configure(IAccelergreatBuilder builder)
+{
+    builder.AddAccelergreatComponent<DatabaseComponent>();  // First
+    builder.AddAccelergreatComponent<ApiComponent>();       // Second (depends on DB)
+}
+```
+
+### 2. Use Environment-Specific Configuration
+```csharp
+// Development: Fast transactions
+// CI: Reliable snapshots
+```
+
+### 3. Configure Parallel Execution
+```json
+// xunit.runner.json
+{
+  "maxParallelThreads": 4,
+  "parallelizeTestCollections": true
+}
+```
+
+```csharp
+// Tests automatically run in parallel - no collections needed!
+public class OrderCreationTests : AccelergreatXunitTest { }
+public class OrderUpdateTests : AccelergreatXunitTest { }
+public class ProductTests : AccelergreatXunitTest { }
+
+// Optional: Use collections only for logical grouping
+[Collection("SlowTests")]
+public class LongRunningTests : AccelergreatXunitTest { }
+```
+
+### 4. Debugging Tips
+```csharp
+// ⚠️ Important: In Visual Studio, don't click "Stop" during debugging
+// Let tests complete naturally for proper cleanup
+```
+
+---
 
 
-**To see other examples**, you can look on our [GitHub examples repo](https://github.com/Accelergreat/Examples).
 
-## Parallel execution
 
-One of the best features of Accelergreat is the ability to have your integration tests run in parallel, gaining massive performance improvements on multi-threaded machines.
+---
 
-Accelergreat will automatically execute in parallel when the following criteria is met:
+## 📚 Resources
 
-- More than 1 test collection is queued for execution.
-- [`parallelizeTestCollections`](https://xunit.net/docs/configuration-files#parallelizeTestCollections) has not been set to false in your [`xunit.runner.json`](https://xunit.net/docs/configuration-files).
-- [`maxParallelThreads`](https://xunit.net/docs/configuration-files#maxParallelThreads) has not been set to 1 in your [`xunit.runner.json`](https://xunit.net/docs/configuration-files).
+### Documentation
+- 📖 [Getting Started Guide](https://docs.accelergreat.net/)
+- 🔧 [API Reference](https://docs.accelergreat.net/api/)
+- 📝 [Component Guide](components.md)
+- 🏢 [Microservices Guide](microservices.md)
 
-By default, Accelergreat uses the max threads allowed from the number of logical processors on the machine. You can override this by setting the [`maxParallelThreads`](https://xunit.net/docs/configuration-files#maxParallelThreads) property in your [`xunit.runner.json`](https://xunit.net/docs/configuration-files) configuration file.
+### Examples
+- 💻 [Sample Projects](https://github.com/Accelergreat/Examples)
 
-## Database transactions
 
-Resetting a databse between tests takes time. By default, Accelergreat uses the `SnapshotRollback` reset strategy that creates a snapshot of the database before the tests run, and performs a rollback on the database between each test.
+### Community
+- 💬 [Discord Community](https://discord.com/channels/1175044305988091995/1175044307032481804)
+- 📧 [Email Support](mailto:mail@accelergreat.net)
+- 🐛 [GitHub Issues](https://github.com/Accelergreat/Accelergreat/issues)
+- ❓ [FAQ](https://accelergreat.net/faqs)
 
-The time it takes to reset a database will greatly impact how long it takes the entire test suite to run.
+---
 
-With the premium `Transactions` reset strategy, Accelergreat performs magic transaction management and all of your test database changes are made within a single transaction. 
+## 📄 License
 
-If your application uses transactions that is covered by your tests, you can enable `TransactionOveriding` and Accelergreat will do even more magic behind the scenes to nest your transactions within Accelergreats transaction.
+**Accelergreat is completely free to use** - No licensing fees, no restrictions, all features included.
 
-This paired with the Parallel execution feature will let your tests 'make the jump to light speed' - Han Solo.
+**All Features Available:**
+- Transaction reset strategy
+- Microservices support  
+- Database providers
+- Parallel execution
+- Environment pooling
 
-# Licensing / Pricing
-Accelergreat is free to use.
+---
 
-# Debugging Best Practices
+> **📝 Documentation Notice**: This documentation has been generated using Cursor AI to improve clarity and developer experience. While every effort has been made to proofread and ensure accuracy, if you encounter any issues or inaccuracies, please contact us at [mail@accelergreat.net](mailto:mail@accelergreat.net).
 
-**Important**
-When debugging tests in Visual Studio, do not click the stop button. Even if an exception occurs, click continue and let the test run through. If you click the stop button xunit will not run cleanup operations and dependencies will not be disposed of. This is especially important when debugging tests that use database dependencies.
-
-# Community & support
-
-Email [mail@accelergreat.net](mailto:mail@accelergreat.net) for direct communication and support requests.
-
-Join our [Discord channel](https://discord.com/channels/1175044305988091995/1175044307032481804).
-
-See our [GitHub](https://github.com/Accelergreat/Examples).
-
-See our [FAQs](https://accelergreat.net/faqs).
+*Made with ❤️ by developers, for developers. Transform your integration testing experience with Accelergreat 4.0.*
