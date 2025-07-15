@@ -57,7 +57,7 @@
     },
     "fileMetadataFiles": [],
     "template": [
-      "default"
+      "./_exported_templates/accelergreat"
     ],
     "postProcessors": [],
     "markdownEngineName": "dfm",
