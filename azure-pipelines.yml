@@ -112,6 +112,18 @@ steps:
   inputs:
     solution: '.'
 
+- task: PowerShell@2
+  displayName: 'Validate DocFX output'
+  inputs:
+    targetType: 'inline'
+    script: |
+      if (!(Test-Path "_site/index.html")) {
+        Write-Error "DocFX build failed: index.html not found in _site folder"
+        Get-ChildItem "_site" -Recurse | Select-Object FullName
+        exit 1
+      }
+      Write-Host "DocFX build successful: index.html found"
+
 - task: PublishBuildArtifacts@1
   displayName: 'Publish NuGet packages'
   inputs:
