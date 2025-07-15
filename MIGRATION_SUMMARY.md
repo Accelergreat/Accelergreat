@@ -120,6 +120,12 @@ Create these environments in repository settings:
 
 ## 🐛 Troubleshooting
 
+### Build Issues Fixed
+1. **Fixed non-existent `docs/**` path**: Removed from deploy-docs workflow triggers
+2. **Updated Azure Static Web Apps action**: Changed from `@v1` to specific commit hash for security
+3. **DocFX package name**: Confirmed correct (`docfx`)
+4. **Test paths**: Verified all test project paths are correct
+
 ### Common Issues
 1. **Missing secrets**: Check repository secrets are configured
 2. **Environment permissions**: Ensure environments have proper reviewers
