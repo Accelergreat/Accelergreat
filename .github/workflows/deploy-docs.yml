@@ -79,17 +79,10 @@ jobs:
     - name: Install DocFX
       run: dotnet tool install -g docfx
 
-    - name: Export DocFX template
-      run: |
-        echo "Creating template directory structure"
-        mkdir -p _exported_templates
-        echo "Exporting default template"
-        docfx template export default -o _exported_templates/accelergreat
-
     - name: Build documentation
       run: |
         echo "Building documentation with DocFX"
-        docfx docfx.json --warningsAsErrors false
+        docfx --warningsAsErrors false
         echo "DocFX build completed"
 
     - name: Verify documentation build output
@@ -99,43 +92,22 @@ jobs:
           echo "_site directory exists"
           echo "Contents of _site:"
           ls -la _site/
-          echo "Checking for index.html:"
-          find _site -name "index.html" -type f
+          echo "Searching for all HTML files in _site:"
+          find _site -name "*.html" -type f | head -20
           
-          # Create a staticwebapp.config.json to ensure correct handling
-          echo '{"navigationFallback":{"rewrite":"/index.html"}}' > _site/staticwebapp.config.json
+          # Check if index.html exists at root
+          if [ -f "_site/index.html" ]; then
+            echo "✓ index.html found in _site root"
+          else
+            echo "✗ index.html NOT found in _site root"
+            echo "All files in _site:"
+            find _site -type f
+          fi
         else
           echo "ERROR: _site directory does not exist!"
           echo "Current directory contents:"
           ls -la
           exit 1
-        fi
-
-    - name: Upload documentation artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: _site
-
-    - name: Download documentation artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: documentation
-        path: ./documentation
-
-    - name: Verify documentation structure
-      run: |
-        echo "Verifying documentation structure before deployment:"
-        echo "Contents of current directory:"
-        ls -la
-        echo "Contents of documentation directory:"
-        ls -la documentation/
-        echo "Checking for index.html in documentation:"
-        if [ -f "documentation/index.html" ]; then
-          echo "✓ index.html found in documentation directory"
-        else
-          echo "✗ index.html NOT found in documentation directory"
-          find . -name "index.html" -type f
         fi
 
     - name: Deploy to Azure Static Web Apps
@@ -144,5 +116,5 @@ jobs:
         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: "upload"
-        app_location: "documentation"
+        app_location: "_site"
         skip_app_build: true
