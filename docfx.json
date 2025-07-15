@@ -36,6 +36,13 @@
         "files": [
           "images/**"
         ]
+      },
+      {
+        "files": [
+          "src/accelergreat_icon.png"
+        ],
+        "src": ".",
+        "dest": "."
       }
     ],
     "overwrite": [
@@ -53,11 +60,15 @@
     "globalMetadataFiles": [],
     "globalMetadata": {
       "_appTitle": "Accelergreat Documentation",
+      "_appName": "Accelergreat",
+      "_appLogoPath": "accelergreat_icon.png",
+      "_appFaviconPath": "accelergreat_icon.png",
       "_enableNewTab": true
     },
     "fileMetadataFiles": [],
     "template": [
-      "default"
+      "default",
+      "_exported_templates/accelergreat"
     ],
     "postProcessors": [],
     "markdownEngineName": "dfm",

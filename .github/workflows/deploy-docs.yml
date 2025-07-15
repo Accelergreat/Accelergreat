@@ -1,16 +1,11 @@
 name: Deploy Documentation (Manual)
 
+# This workflow deploys documentation to Azure Static Web Apps
+# - Main branch: Deploys to production (https://docs.accelergreat.net)
+# - Other branches: Automatically creates preview environments
+
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
 
 permissions:
   contents: read
@@ -24,7 +19,6 @@ env:
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
     name: Deploy Documentation
     
     steps:
@@ -79,6 +73,16 @@ jobs:
     - name: Install DocFX
       run: dotnet tool install -g docfx
 
+    - name: Setup custom template
+      run: |
+        echo "Setting up custom Accelergreat template..."
+        mkdir -p _exported_templates/accelergreat
+        
+        # Create a minimal template overlay for branding
+        cat > _exported_templates/accelergreat/layout/_master.liquid << 'EOF'
+        <!-- This is an overlay template that extends the default template -->
+        EOF
+
     - name: Build documentation
       run: |
         echo "Building documentation with DocFX"
@@ -103,11 +107,26 @@ jobs:
             echo "All files in _site:"
             find _site -type f
           fi
+          
+          # Check if logo was copied
+          echo "Checking for Accelergreat logo:"
+          find _site -name "*accelergreat_icon*" -type f
         else
           echo "ERROR: _site directory does not exist!"
           echo "Current directory contents:"
           ls -la
           exit 1
+        fi
+
+    - name: Determine deployment environment
+      id: deployment_env
+      run: |
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "environment=Production" >> $GITHUB_OUTPUT
+          echo "Deploying to Production"
+        else
+          echo "environment=Preview" >> $GITHUB_OUTPUT
+          echo "Deploying to Preview environment for branch: ${GITHUB_REF#refs/heads/}"
         fi
 
     - name: Deploy to Azure Static Web Apps
@@ -118,3 +137,4 @@ jobs:
         action: "upload"
         app_location: "_site"
         skip_app_build: true
+        production_branch: "main"

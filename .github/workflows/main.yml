@@ -79,6 +79,16 @@ jobs:
     - name: Install DocFX
       run: dotnet tool install -g docfx
 
+    - name: Setup custom template
+      run: |
+        echo "Setting up custom Accelergreat template..."
+        mkdir -p _exported_templates/accelergreat
+        
+        # Create a minimal template overlay for branding
+        cat > _exported_templates/accelergreat/layout/_master.liquid << 'EOF'
+        <!-- This is an overlay template that extends the default template -->
+        EOF
+
     - name: Build documentation
       run: |
         echo "Building documentation with DocFX"
@@ -103,6 +113,10 @@ jobs:
             echo "All files in _site:"
             find _site -type f
           fi
+          
+          # Check if logo was copied
+          echo "Checking for Accelergreat logo:"
+          find _site -name "*accelergreat_icon*" -type f
         else
           echo "ERROR: _site directory does not exist!"
           echo "Current directory contents:"
@@ -118,6 +132,7 @@ jobs:
         action: "upload"
         app_location: "_site"
         skip_app_build: true
+        production_branch: "main"
 
     - name: Deploy to NuGet
       run: |
