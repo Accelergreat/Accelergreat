@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Generate version
+      id: version
+      run: |
+        # Read version from version.json
+        VERSION=$(jq -r '.version' version.json)
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "package_version=${VERSION}" >> $GITHUB_OUTPUT
+        
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        echo "Replacing version tokens in all files..."
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${VERSION}/g" "$file"
+          fi
+        done
+        
+        # Debug: Show version replacement results
+        echo "Version replacement completed:"
+        echo "Generated version: $VERSION"
+        
+        echo "Contents of src/Directory.Build.props after replacement:"
+        cat src/Directory.Build.props
+        
+        echo "Contents of configuration/schema.json after replacement:"
+        cat configuration/schema.json
+        
+        echo "Contents of version.json after replacement:"
+        cat version.json
+    
+    - name: Restore dependencies
+      run: dotnet restore Accelergreat.sln
+
+    - name: Build solution
+      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+    - name: Pack NuGet packages
+      run: |
+        # Create output directory
+        mkdir -p ./nuget-packages
+        
+        # Show debug info
+        echo "Current directory: $(pwd)"
+        echo "Looking for projects in src/:"
+        find src/ -name "*.csproj" -type f
+        
+        # Pack each project individually using for loop to avoid subshell issues
+        for project in $(find src/ -name "*.csproj" -type f); do
+          echo "Packing project: $project"
+          dotnet pack "$project" \
+            --configuration ${{ env.BUILD_CONFIGURATION }} \
+            --output ./nuget-packages \
+            -p:PackageVersion=${{ steps.version.outputs.package_version }} \
+            -p:Version=${{ steps.version.outputs.package_version }} \
+            --verbosity normal
+        done
+        
+        # Show what was created
+        echo "Created packages:"
+        ls -la ./nuget-packages/ || echo "No packages directory found"
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      package_version: ${{ steps.version.outputs.package_version }}
+
+  documentation:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Apply version to files
+      run: |
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${{ needs.build.outputs.version }}/g" "$file"
+          fi
+        done
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Build documentation
+      run: docfx docfx.json

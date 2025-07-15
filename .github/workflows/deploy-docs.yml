@@ -1,0 +1,120 @@
+name: Deploy Documentation (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    name: Deploy Documentation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Generate version
+      id: version
+      run: |
+        # Read base version from version.json
+        BASE_VERSION=$(jq -r '.version' version.json)
+        
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          # For main branch, use the base version
+          VERSION="${BASE_VERSION}"
+        else
+          # For non-main branches, add pre-release suffix
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          VERSION="${BASE_VERSION}-beta.${SHORT_SHA}"
+        fi
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Deploying docs with version: ${VERSION}"
+        
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        echo "Replacing version tokens in all files..."
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${VERSION}/g" "$file"
+          fi
+        done
+
+    - name: Restore dependencies
+      run: dotnet restore Accelergreat.sln
+
+    - name: Build solution
+      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Export DocFX template
+      run: |
+        echo "Creating template directory structure"
+        mkdir -p _exported_templates
+        echo "Exporting default template"
+        docfx template export default -o _exported_templates/accelergreat
+
+    - name: Build documentation
+      run: |
+        echo "Building documentation with DocFX"
+        docfx docfx.json --warningsAsErrors false
+        echo "DocFX build completed"
+
+    - name: Verify documentation build output
+      run: |
+        echo "Checking _site directory contents:"
+        if [ -d "_site" ]; then
+          echo "_site directory exists"
+          echo "Contents of _site:"
+          ls -la _site/
+          echo "Checking for index.html:"
+          find _site -name "index.html" -type f
+        else
+          echo "ERROR: _site directory does not exist!"
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        fi
+
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "_site"
+        output_location: ""
+        skip_app_build: true
+        production_branch: main

@@ -1,0 +1,85 @@
+name: Validate Version
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate version.json format
+      run: |
+        # Check if version.json exists
+        if [ ! -f "version.json" ]; then
+          echo "❌ version.json file not found"
+          exit 1
+        fi
+        
+        # Check if version.json is valid JSON
+        if ! jq empty version.json 2>/dev/null; then
+          echo "❌ version.json is not valid JSON"
+          exit 1
+        fi
+        
+        # Check required version field
+        VERSION=$(jq -r '.version // empty' version.json)
+        
+        if [ -z "$VERSION" ]; then
+          echo "❌ version.json missing required field: version"
+          exit 1
+        fi
+        
+        # Validate version format (semantic versioning)
+        if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'; then
+          echo "❌ version format is invalid. Expected: MAJOR.MINOR.PATCH[-PRERELEASE]"
+          exit 1
+        fi
+        
+        echo "✅ Version format is valid: $VERSION"
+
+    - name: Check if version changed from main
+      run: |
+        # Get the current version
+        CURRENT_VERSION=$(jq -r '.version' version.json)
+        
+        # Get the version from main branch
+        git fetch origin main
+        MAIN_VERSION=$(git show origin/main:version.json | jq -r '.version')
+        
+        echo "Current version: $CURRENT_VERSION"
+        echo "Main branch version: $MAIN_VERSION"
+        
+        if [ "$CURRENT_VERSION" == "$MAIN_VERSION" ]; then
+          echo "❌ Version has not changed from main branch ($MAIN_VERSION)"
+          echo "Please update the version in version.json before merging"
+          exit 1
+        fi
+        
+        echo "✅ Version has changed from main branch"
+        echo "  Main: $MAIN_VERSION"
+        echo "  Current: $CURRENT_VERSION"
+
+    - name: Validate version is greater than main
+      run: |
+        # Get versions
+        CURRENT_VERSION=$(jq -r '.version' version.json)
+        MAIN_VERSION=$(git show origin/main:version.json | jq -r '.version')
+        
+        # Simple version comparison using sort -V
+        if [ "$CURRENT_VERSION" != "$MAIN_VERSION" ]; then
+          LATEST=$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n1)
+          if [ "$LATEST" != "$CURRENT_VERSION" ]; then
+            echo "❌ Current version ($CURRENT_VERSION) should be greater than main version ($MAIN_VERSION)"
+            exit 1
+          fi
+        fi
+        
+        echo "✅ Version is valid and greater than main"
