@@ -110,13 +110,6 @@ jobs:
         echo "Created packages:"
         ls -la ./nuget-packages/ || echo "No packages directory found"
 
-    - name: Upload NuGet packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: nuget-packages
-        path: ./nuget-packages/
-        retention-days: 7
-
     outputs:
       version: ${{ steps.version.outputs.version }}
       package_version: ${{ steps.version.outputs.package_version }}
@@ -153,17 +146,3 @@ jobs:
 
     - name: Build documentation
       run: docfx docfx.json
-
-    - name: Upload documentation artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: _site/
-        retention-days: 7
-
-    - name: Upload configuration schema
-      uses: actions/upload-artifact@v4
-      with:
-        name: configuration-schema
-        path: configuration/schema.json
-        retention-days: 7

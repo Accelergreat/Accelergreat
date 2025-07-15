@@ -90,9 +90,3 @@ jobs:
           --source https://api.nuget.org/v3/index.json \
           --skip-duplicate
 
-    - name: Upload NuGet packages as artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: nuget-packages-${{ steps.version.outputs.version }}
-        path: ./nuget-packages/
-        retention-days: 30

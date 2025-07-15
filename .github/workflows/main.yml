@@ -101,11 +101,3 @@ jobs:
         skip_app_build: true
         production_branch: main
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: production-deployment-${{ steps.version.outputs.version }}
-        path: |
-          ./nuget-packages/
-          ./_site/
-        retention-days: 30
