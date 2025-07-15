@@ -131,6 +131,13 @@ Create these environments in repository settings:
    - Added explicit version parameters: `-p:PackageVersion` and `-p:Version`
    - Added debug output to troubleshoot packing issues
 
+6. **Test configuration**: Made tests conditional (disabled by default)
+   - Original Azure DevOps pipeline had `condition: false` for all tests
+   - Added `if: vars.ENABLE_TESTS == 'true'` to match original behavior
+   - Added SQL Server setup for Windows runners
+   - Added `continue-on-error: true` for resilient testing
+   - Removed test dependency from deployment jobs
+
 ### Common Issues
 1. **Missing secrets**: Check repository secrets are configured
 2. **Environment permissions**: Ensure environments have proper reviewers

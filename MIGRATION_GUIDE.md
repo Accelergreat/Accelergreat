@@ -108,13 +108,27 @@ The project now uses semantic versioning with `version.json`:
 
 ## Testing
 
+### Tests Are Disabled by Default
+Following the original Azure DevOps pipeline configuration, **all tests are disabled by default** (`condition: false` in the original pipeline). This suggests the tests may have dependencies or issues that prevent them from running reliably in CI.
+
+### Enabling Tests
+To enable tests, set a repository variable:
+1. Go to repository **Settings** → **Variables** → **Actions**
+2. Add variable: `ENABLE_TESTS` with value `true`
+
 ### SQL Server Tests
-Tests requiring SQL Server now run on Windows runners:
+When enabled, tests requiring SQL Server run on Windows runners with automatic SQL Server setup:
 - `Accelergreat.Tests.EntityFramework.SqlServer`
 - `Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase`
 
 ### Other Tests
 API tests run on Windows for consistency with the test environment.
+
+### Test Configuration
+- **SQL Server Setup**: Automatically installed using `ankane/setup-sqlserver@v1`
+- **Continue on Error**: Tests use `continue-on-error: true` for resilient builds  
+- **Test Results**: Automatically uploaded as artifacts
+- **Deployment**: NuGet deployment doesn't depend on tests (matches original behavior)
 
 ## Deployment Strategy
 
