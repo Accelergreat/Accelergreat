@@ -11,11 +11,6 @@ permissions:
   contents: read
   pull-requests: write
 
-env:
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  DOTNET_NOLOGO: true
-  BUILD_CONFIGURATION: Release
-
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
@@ -25,17 +20,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: true
         fetch-depth: 0
 
-    - name: Setup .NET SDKs
-      uses: actions/setup-dotnet@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        dotnet-version: |
-          6.0.x
-          7.0.x
-          8.0.x
-          9.0.x
+        node-version: '18'
 
     - name: Generate version
       id: version
@@ -55,39 +45,20 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "Deploying docs with version: ${VERSION}"
         
-        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        # Replace version tokens in all files
         echo "Replacing version tokens in all files..."
-        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+        find . -name "*.json" -o -name "*.md" | while read file; do
           if grep -q "~(version)~" "$file"; then
             echo "Replacing version in: $file"
             sed -i "s/~(version)~/${VERSION}/g" "$file"
           fi
         done
 
-    - name: Restore dependencies
-      run: dotnet restore Accelergreat.sln
+    - name: Install dependencies
+      run: npm install
 
-    - name: Build solution
-      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
-
-    - name: Install DocFX
-      run: dotnet tool install -g docfx
-
-    - name: Setup custom template
-      run: |
-        echo "Setting up custom Accelergreat template..."
-        mkdir -p _exported_templates/accelergreat
-        
-        # Create a minimal template overlay for branding
-        cat > _exported_templates/accelergreat/layout/_master.liquid << 'EOF'
-        <!-- This is an overlay template that extends the default template -->
-        EOF
-
-    - name: Build documentation
-      run: |
-        echo "Building documentation with DocFX"
-        docfx --warningsAsErrors false
-        echo "DocFX build completed"
+    - name: Build documentation site
+      run: npm run build
 
     - name: Verify documentation build output
       run: |
@@ -96,25 +67,20 @@ jobs:
           echo "_site directory exists"
           echo "Contents of _site:"
           ls -la _site/
-          echo "Searching for all HTML files in _site:"
-          find _site -name "*.html" -type f | head -20
           
           # Check if index.html exists at root
           if [ -f "_site/index.html" ]; then
             echo "✓ index.html found in _site root"
           else
             echo "✗ index.html NOT found in _site root"
-            echo "All files in _site:"
-            find _site -type f
+            exit 1
           fi
           
-          # Check if logo was copied
-          echo "Checking for Accelergreat logo:"
-          find _site -name "*accelergreat_icon*" -type f
+          # Check if assets were copied
+          echo "Checking for assets:"
+          ls -la _site/accelergreat_icon.png _site/favicon.ico _site/styles/main.css || true
         else
           echo "ERROR: _site directory does not exist!"
-          echo "Current directory contents:"
-          ls -la
           exit 1
         fi
 

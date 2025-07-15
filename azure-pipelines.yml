@@ -107,10 +107,15 @@ steps:
     nobuild: true
     versioningScheme: 'off'
 
-- task: DocFxTask@0
-  displayName: 'Build documentation website'
+- task: NodeTool@0
+  displayName: 'Install Node.js'
   inputs:
-    solution: '.'
+    versionSpec: '18.x'
+
+- script: |
+    npm install
+    npm run build
+  displayName: 'Build documentation website'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish documentation website'
