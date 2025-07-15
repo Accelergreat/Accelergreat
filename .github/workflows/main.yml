@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy to Production (Auto)
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -14,9 +15,9 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  deploy:
+  deploy-production:
     runs-on: ubuntu-latest
-    environment: production
+    name: Deploy Both Docs and NuGet to Production
     
     steps:
     - name: Checkout code
@@ -83,6 +84,7 @@ jobs:
 
     - name: Deploy to NuGet
       run: |
+        echo "Deploying NuGet packages..."
         dotnet nuget push "./nuget-packages/*.nupkg" \
           --api-key ${{ secrets.NUGET_API_KEY }} \
           --source https://api.nuget.org/v3/index.json \
@@ -97,3 +99,13 @@ jobs:
         app_location: "_site"
         output_location: ""
         skip_app_build: true
+        production_branch: main
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-deployment-${{ steps.version.outputs.version }}
+        path: |
+          ./nuget-packages/
+          ./_site/
+        retention-days: 30

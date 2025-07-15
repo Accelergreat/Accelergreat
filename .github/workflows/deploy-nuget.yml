@@ -1,4 +1,4 @@
-name: Deploy Documentation (Manual)
+name: Deploy NuGet Packages (Manual)
 
 on:
   workflow_dispatch:
@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -22,10 +21,10 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  deploy-docs:
+  deploy-nuget:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    name: Deploy Documentation
+    name: Deploy NuGet Packages
     
     steps:
     - name: Checkout code
@@ -65,19 +64,35 @@ jobs:
     - name: Build solution
       run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
 
-    - name: Install DocFX
-      run: dotnet tool install -g docfx
+    - name: Pack NuGet packages
+      run: |
+        # Create output directory
+        mkdir -p ./nuget-packages
+        
+        echo "Packing NuGet packages..."
+        for project in $(find src/ -name "*.csproj" -type f); do
+          echo "Packing project: $project"
+          dotnet pack "$project" \
+            --configuration ${{ env.BUILD_CONFIGURATION }} \
+            --output ./nuget-packages \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --verbosity normal
+        done
+        
+        echo "Created packages:"
+        ls -la ./nuget-packages/
 
-    - name: Build documentation
-      run: docfx docfx.json
+    - name: Deploy to NuGet
+      run: |
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
 
-    - name: Deploy to Azure Static Web Apps
-      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
+    - name: Upload NuGet packages as artifacts
+      uses: actions/upload-artifact@v4
       with:
-        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        action: "upload"
-        app_location: "_site"
-        output_location: ""
-        skip_app_build: true
-        production_branch: main
+        name: nuget-packages-${{ steps.version.outputs.version }}
+        path: ./nuget-packages/
+        retention-days: 30

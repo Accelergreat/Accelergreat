@@ -2,8 +2,7 @@ name: Validate Version
 
 on:
   pull_request:
-    paths:
-      - 'version.json'
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -18,6 +17,12 @@ jobs:
 
     - name: Validate version.json format
       run: |
+        # Check if version.json exists
+        if [ ! -f "version.json" ]; then
+          echo "❌ version.json file not found"
+          exit 1
+        fi
+        
         # Check if version.json is valid JSON
         if ! jq empty version.json 2>/dev/null; then
           echo "❌ version.json is not valid JSON"
