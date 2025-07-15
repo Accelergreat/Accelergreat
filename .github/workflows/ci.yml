@@ -35,25 +35,14 @@ jobs:
           8.0.x
           9.0.x
 
-    - name: Generate version from semantic versioning
+    - name: Generate version
       id: version
       run: |
-        # Read base version from version.json
-        BASE_VERSION=$(jq -r '.version' version.json)
-        
-        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          # For main branch, use the base version
-          VERSION="${BASE_VERSION}"
-          PACKAGE_VERSION="${BASE_VERSION}"
-        else
-          # For PR/branches, add pre-release suffix
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
-          PACKAGE_VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
-        fi
+        # Read version from version.json
+        VERSION=$(jq -r '.version' version.json)
         
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+        echo "package_version=${VERSION}" >> $GITHUB_OUTPUT
         
         # Replace version tokens in all files (matching original Azure DevOps pipeline)
         echo "Replacing version tokens in all files..."
@@ -66,9 +55,7 @@ jobs:
         
         # Debug: Show version replacement results
         echo "Version replacement completed:"
-        echo "Base version: $BASE_VERSION"
         echo "Generated version: $VERSION"
-        echo "Package version: $PACKAGE_VERSION"
         
         echo "Contents of src/Directory.Build.props after replacement:"
         cat src/Directory.Build.props

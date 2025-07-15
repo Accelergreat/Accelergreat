@@ -46,9 +46,20 @@ jobs:
     - name: Generate version
       id: version
       run: |
-        # Read version from version.json
-        VERSION=$(jq -r '.version' version.json)
+        # Read base version from version.json
+        BASE_VERSION=$(jq -r '.version' version.json)
+        
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          # For main branch, use the base version
+          VERSION="${BASE_VERSION}"
+        else
+          # For non-main branches, add pre-release suffix
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          VERSION="${BASE_VERSION}-beta.${SHORT_SHA}"
+        fi
+        
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Deploying docs with version: ${VERSION}"
         
         # Replace version tokens in all files (matching original Azure DevOps pipeline)
         echo "Replacing version tokens in all files..."
