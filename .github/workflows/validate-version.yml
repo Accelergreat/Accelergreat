@@ -24,109 +24,57 @@ jobs:
           exit 1
         fi
         
-        # Check required fields
+        # Check required version field
         VERSION=$(jq -r '.version // empty' version.json)
-        MAJOR=$(jq -r '.major // empty' version.json)
-        MINOR=$(jq -r '.minor // empty' version.json)
-        PATCH=$(jq -r '.patch // empty' version.json)
         
-        if [ -z "$VERSION" ] || [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ]; then
-          echo "❌ version.json missing required fields: version, major, minor, patch"
+        if [ -z "$VERSION" ]; then
+          echo "❌ version.json missing required field: version"
           exit 1
         fi
         
-        # Validate version format
+        # Validate version format (semantic versioning)
         if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'; then
           echo "❌ version format is invalid. Expected: MAJOR.MINOR.PATCH[-PRERELEASE]"
           exit 1
         fi
         
-        # Check if version matches major.minor.patch
-        EXPECTED_VERSION="$MAJOR.$MINOR.$PATCH"
-        PRERELEASE=$(jq -r '.prerelease // empty' version.json)
-        
-        if [ -n "$PRERELEASE" ] && [ "$PRERELEASE" != "null" ]; then
-          EXPECTED_VERSION="$EXPECTED_VERSION-$PRERELEASE"
-        fi
-        
-        if [ "$VERSION" != "$EXPECTED_VERSION" ]; then
-          echo "❌ version field ($VERSION) doesn't match major.minor.patch[$PRERELEASE] ($EXPECTED_VERSION)"
-          exit 1
-        fi
-        
-        # Check if numbers are valid integers
-        if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
-          echo "❌ major, minor, and patch must be non-negative integers"
-          exit 1
-        fi
-        
-        echo "✅ version.json format is valid"
-        echo "📋 Version: $VERSION"
-        echo "📋 Major: $MAJOR, Minor: $MINOR, Patch: $PATCH"
-        if [ -n "$PRERELEASE" ] && [ "$PRERELEASE" != "null" ]; then
-          echo "📋 Prerelease: $PRERELEASE"
-        fi
+        echo "✅ Version format is valid: $VERSION"
 
-    - name: Check version increment (if PR)
-      if: github.event_name == 'pull_request'
+    - name: Check if version changed from main
       run: |
-        # Get the base version from main branch
-        git fetch origin main
-        BASE_VERSION=$(git show origin/main:version.json | jq -r '.version')
+        # Get the current version
         CURRENT_VERSION=$(jq -r '.version' version.json)
         
-        echo "📋 Base version (main): $BASE_VERSION"
-        echo "📋 Current version (PR): $CURRENT_VERSION"
+        # Get the version from main branch
+        git fetch origin main
+        MAIN_VERSION=$(git show origin/main:version.json | jq -r '.version')
         
-        # Extract version parts
-        BASE_MAJOR=$(echo "$BASE_VERSION" | cut -d. -f1)
-        BASE_MINOR=$(echo "$BASE_VERSION" | cut -d. -f2)
-        BASE_PATCH=$(echo "$BASE_VERSION" | cut -d. -f3 | cut -d- -f1)
+        echo "Current version: $CURRENT_VERSION"
+        echo "Main branch version: $MAIN_VERSION"
         
-        CURRENT_MAJOR=$(jq -r '.major' version.json)
-        CURRENT_MINOR=$(jq -r '.minor' version.json)
-        CURRENT_PATCH=$(jq -r '.patch' version.json)
-        
-        # Check if version has increased
-        if [ "$CURRENT_MAJOR" -gt "$BASE_MAJOR" ]; then
-          echo "✅ Major version increment detected"
-        elif [ "$CURRENT_MAJOR" -eq "$BASE_MAJOR" ] && [ "$CURRENT_MINOR" -gt "$BASE_MINOR" ]; then
-          echo "✅ Minor version increment detected"
-        elif [ "$CURRENT_MAJOR" -eq "$BASE_MAJOR" ] && [ "$CURRENT_MINOR" -eq "$BASE_MINOR" ] && [ "$CURRENT_PATCH" -gt "$BASE_PATCH" ]; then
-          echo "✅ Patch version increment detected"
-        elif [ "$CURRENT_VERSION" == "$BASE_VERSION" ]; then
-          echo "⚠️  No version change detected"
-        else
-          echo "❌ Version must be incremented according to semantic versioning rules"
-          echo "💡 Current: $CURRENT_VERSION, Base: $BASE_VERSION"
+        if [ "$CURRENT_VERSION" == "$MAIN_VERSION" ]; then
+          echo "❌ Version has not changed from main branch ($MAIN_VERSION)"
+          echo "Please update the version in version.json before merging"
           exit 1
         fi
+        
+        echo "✅ Version has changed from main branch"
+        echo "  Main: $MAIN_VERSION"
+        echo "  Current: $CURRENT_VERSION"
 
-    - name: Comment on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
-          
-          const comment = `## 🔖 Version Validation
-          
-          **Version:** \`${version.version}\`
-          **Components:** Major: \`${version.major}\`, Minor: \`${version.minor}\`, Patch: \`${version.patch}\`
-          ${version.prerelease && version.prerelease !== 'null' ? `**Prerelease:** \`${version.prerelease}\`` : ''}
-          
-          ### Semantic Versioning Rules
-          - **MAJOR**: Increment for incompatible API changes
-          - **MINOR**: Increment for backward compatible functionality
-          - **PATCH**: Increment for backward compatible bug fixes
-          - **PRERELEASE**: For preview versions (alpha, beta, rc.1, etc.)
-          
-          ✅ Version format is valid and follows semantic versioning.`;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+    - name: Validate version is greater than main
+      run: |
+        # Get versions
+        CURRENT_VERSION=$(jq -r '.version' version.json)
+        MAIN_VERSION=$(git show origin/main:version.json | jq -r '.version')
+        
+        # Simple version comparison using sort -V
+        if [ "$CURRENT_VERSION" != "$MAIN_VERSION" ]; then
+          LATEST=$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n1)
+          if [ "$LATEST" != "$CURRENT_VERSION" ]; then
+            echo "❌ Current version ($CURRENT_VERSION) should be greater than main version ($MAIN_VERSION)"
+            exit 1
+          fi
+        fi
+        
+        echo "✅ Version is valid and greater than main"

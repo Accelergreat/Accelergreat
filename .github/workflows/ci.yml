@@ -3,21 +3,12 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - '.gitignore'
-      - 'docs/**'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - '.gitignore'
-      - 'docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
-  pull-requests: write
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -32,6 +23,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
+        submodules: true
         fetch-depth: 0
 
     - name: Setup .NET SDKs
@@ -63,10 +55,6 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
         
-        # Debug output
-        echo "Generated version: ${VERSION}"
-        echo "Generated package version: ${PACKAGE_VERSION}"
-        
         # Replace version tokens in all files (matching original Azure DevOps pipeline)
         echo "Replacing version tokens in all files..."
         find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
@@ -76,7 +64,18 @@ jobs:
           fi
         done
         
-        # Show what the version.json looks like after replacement (should show our version now)
+        # Debug: Show version replacement results
+        echo "Version replacement completed:"
+        echo "Base version: $BASE_VERSION"
+        echo "Generated version: $VERSION"
+        echo "Package version: $PACKAGE_VERSION"
+        
+        echo "Contents of src/Directory.Build.props after replacement:"
+        cat src/Directory.Build.props
+        
+        echo "Contents of configuration/schema.json after replacement:"
+        cat configuration/schema.json
+        
         echo "Contents of version.json after replacement:"
         cat version.json
     
@@ -122,8 +121,6 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       package_version: ${{ steps.version.outputs.package_version }}
 
-
-
   documentation:
     runs-on: ubuntu-latest
     needs: build
@@ -141,9 +138,15 @@ jobs:
           8.0.x
           9.0.x
 
-    - name: Apply version to Directory.Build.props
+    - name: Apply version to files
       run: |
-        sed -i "s/~(version)~/${{ needs.build.outputs.version }}/g" src/Directory.Build.props
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${{ needs.build.outputs.version }}/g" "$file"
+          fi
+        done
 
     - name: Install DocFX
       run: dotnet tool install -g docfx
@@ -164,53 +167,3 @@ jobs:
         name: configuration-schema
         path: configuration/schema.json
         retention-days: 7
-
-  deploy-nuget:
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    
-    steps:
-    - name: Download NuGet packages
-      uses: actions/download-artifact@v4
-      with:
-        name: nuget-packages
-        path: ./nuget-packages
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Publish to NuGet
-      run: |
-        dotnet nuget push "./nuget-packages/*.nupkg" \
-          --api-key ${{ secrets.NUGET_API_KEY }} \
-          --source https://api.nuget.org/v3/index.json \
-          --skip-duplicate
-
-  deploy-nuget-manual:
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'pull_request'
-    environment: nuget-manual
-    
-    steps:
-    - name: Download NuGet packages
-      uses: actions/download-artifact@v4
-      with:
-        name: nuget-packages
-        path: ./nuget-packages
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Publish to NuGet (Manual)
-      run: |
-        dotnet nuget push "./nuget-packages/*.nupkg" \
-          --api-key ${{ secrets.NUGET_API_KEY }} \
-          --source https://api.nuget.org/v3/index.json \
-          --skip-duplicate

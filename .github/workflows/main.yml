@@ -1,31 +1,12 @@
-name: Deploy Documentation
+name: Deploy to Production
 
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'docfx.json'
-      - 'index.md'
-      - 'components.md'
-      - 'microservices.md'
-      - 'src/**/*.cs'
-      - 'src/**/*.csproj'
-      - 'version.json'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'docfx.json'
-      - 'index.md'
-      - 'components.md'
-      - 'microservices.md'
-      - 'src/**/*.cs'
-      - 'src/**/*.csproj'
-      - 'version.json'
   workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: write
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -33,10 +14,9 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  build_and_deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+  deploy:
     runs-on: ubuntu-latest
-    name: Build and Deploy Documentation
+    environment: production
     
     steps:
     - name: Checkout code
@@ -54,21 +34,11 @@ jobs:
           8.0.x
           9.0.x
 
-    - name: Generate version from semantic versioning
+    - name: Generate version
       id: version
       run: |
-        # Read base version from version.json
-        BASE_VERSION=$(jq -r '.version' version.json)
-        
-        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          # For main branch, use the base version
-          VERSION="${BASE_VERSION}"
-        else
-          # For PR/branches, add pre-release suffix
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
-        fi
-        
+        # Read version from version.json
+        VERSION=$(jq -r '.version' version.json)
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         
         # Replace version tokens in all files (matching original Azure DevOps pipeline)
@@ -86,11 +56,37 @@ jobs:
     - name: Build solution
       run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
 
+    - name: Pack NuGet packages
+      run: |
+        # Create output directory
+        mkdir -p ./nuget-packages
+        
+        echo "Packing NuGet packages..."
+        for project in $(find src/ -name "*.csproj" -type f); do
+          echo "Packing project: $project"
+          dotnet pack "$project" \
+            --configuration ${{ env.BUILD_CONFIGURATION }} \
+            --output ./nuget-packages \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --verbosity normal
+        done
+        
+        echo "Created packages:"
+        ls -la ./nuget-packages/
+
     - name: Install DocFX
       run: dotnet tool install -g docfx
 
     - name: Build documentation
       run: docfx docfx.json
+
+    - name: Deploy to NuGet
+      run: |
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
 
     - name: Deploy to Azure Static Web Apps
       uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
@@ -101,16 +97,3 @@ jobs:
         app_location: "_site"
         output_location: ""
         skip_app_build: true
-        production_branch: main
-
-  close_pull_request:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request
-    
-    steps:
-    - name: Close Pull Request
-      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
-      with:
-        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-        action: "close"
