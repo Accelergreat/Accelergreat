@@ -126,9 +126,11 @@ API tests run on Windows for consistency with the test environment.
 
 ### Test Configuration
 - **SQL Server Setup**: Automatically installed using `ankane/setup-sqlserver@v1`
-- **Continue on Error**: Tests use `continue-on-error: true` for resilient builds  
 - **Test Results**: Automatically uploaded as artifacts
-- **Deployment**: NuGet deployment doesn't depend on tests (matches original behavior)
+- **Deployment Logic**: 
+  - If tests are disabled: NuGet deployment proceeds after build
+  - If tests are enabled: NuGet deployment only happens if tests pass
+  - **Failing tests WILL block deployment** (as they should!)
 
 ## Deployment Strategy
 

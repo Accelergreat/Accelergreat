@@ -135,8 +135,8 @@ Create these environments in repository settings:
    - Original Azure DevOps pipeline had `condition: false` for all tests
    - Added `if: vars.ENABLE_TESTS == 'true'` to match original behavior
    - Added SQL Server setup for Windows runners
-   - Added `continue-on-error: true` for resilient testing
-   - Removed test dependency from deployment jobs
+   - **Tests will fail the build when enabled** (as they should!)
+   - Deployment depends on tests passing (when tests are enabled)
 
 ### Common Issues
 1. **Missing secrets**: Check repository secrets are configured

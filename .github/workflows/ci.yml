@@ -119,8 +119,10 @@ jobs:
   test:
     runs-on: windows-latest
     needs: build
-    # Tests are currently disabled (same as Azure DevOps pipeline) 
-    # Enable by setting ENABLE_TESTS to true in repository variables
+    # Tests are disabled by default (same as Azure DevOps pipeline had condition: false)
+    # This was likely due to SQL Server dependencies or test reliability issues
+    # Enable by setting repository variable ENABLE_TESTS to 'true'
+    # WARNING: When enabled, failing tests WILL fail the build and prevent deployment
     if: vars.ENABLE_TESTS == 'true'
     
     steps:
@@ -162,7 +164,6 @@ jobs:
           --logger trx `
           --collect:"XPlat Code Coverage" `
           --results-directory ./test-results/api
-      continue-on-error: true
 
     - name: Run SQL Server tests (standard)
       run: |
@@ -173,7 +174,6 @@ jobs:
           --logger trx `
           --collect:"XPlat Code Coverage" `
           --results-directory ./test-results/sqlserver
-      continue-on-error: true
 
     - name: Run SQL Server tests (migrations)
       run: |
@@ -184,7 +184,6 @@ jobs:
           --logger trx `
           --collect:"XPlat Code Coverage" `
           --results-directory ./test-results/migrations
-      continue-on-error: true
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -237,8 +236,10 @@ jobs:
 
   deploy-nuget:
     runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main'
+    needs: [build, test]
+    if: |
+      github.ref == 'refs/heads/main' && 
+      (vars.ENABLE_TESTS != 'true' || needs.test.result == 'success' || needs.test.result == 'skipped')
     environment: production
     
     steps:
@@ -262,8 +263,10 @@ jobs:
 
   deploy-nuget-manual:
     runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'pull_request'
+    needs: [build, test]
+    if: |
+      github.event_name == 'pull_request' &&
+      (vars.ENABLE_TESTS != 'true' || needs.test.result == 'success' || needs.test.result == 'skipped')
     environment: nuget-manual
     
     steps:
