@@ -101,6 +101,9 @@ jobs:
           ls -la _site/
           echo "Checking for index.html:"
           find _site -name "index.html" -type f
+          
+          # Create a staticwebapp.config.json to ensure correct handling
+          echo '{"navigationFallback":{"rewrite":"/index.html"}}' > _site/staticwebapp.config.json
         else
           echo "ERROR: _site directory does not exist!"
           echo "Current directory contents:"
@@ -108,16 +111,41 @@ jobs:
           exit 1
         fi
 
+    - name: Upload documentation artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: _site
+
+    - name: Download documentation artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: documentation
+        path: ./documentation
+
+    - name: Verify documentation structure
+      run: |
+        echo "Verifying documentation structure before deployment:"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Contents of documentation directory:"
+        ls -la documentation/
+        echo "Checking for index.html in documentation:"
+        if [ -f "documentation/index.html" ]; then
+          echo "✓ index.html found in documentation directory"
+        else
+          echo "✗ index.html NOT found in documentation directory"
+          find . -name "index.html" -type f
+        fi
+
     - name: Deploy to Azure Static Web Apps
-      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
+      uses: Azure/static-web-apps-deploy@v1
       with:
         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: "upload"
-        app_location: "_site"
-        output_location: ""
+        app_location: "documentation"
         skip_app_build: true
-        production_branch: main
 
     - name: Deploy to NuGet
       run: |
