@@ -1,0 +1,221 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      - 'docs/**'
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Generate version from semantic versioning
+      id: version
+      run: |
+        # Read base version from version.json
+        BASE_VERSION=$(jq -r '.version' version.json)
+        
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          # For main branch, use the base version
+          VERSION="${BASE_VERSION}"
+          PACKAGE_VERSION="${BASE_VERSION}"
+        else
+          # For PR/branches, add pre-release suffix
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
+          PACKAGE_VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
+        fi
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+        
+        # Create version replacement for token replacement
+        sed -i "s/~(version)~/${VERSION}/g" src/Directory.Build.props
+    
+    - name: Restore dependencies
+      run: dotnet restore Accelergreat.sln
+
+    - name: Build solution
+      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+    - name: Pack NuGet packages
+      run: |
+        dotnet pack src/**/*.csproj \
+          --configuration ${{ env.BUILD_CONFIGURATION }} \
+          --no-build \
+          --output ./nuget-packages \
+          -p:PackageVersion=${{ steps.version.outputs.package_version }}
+
+    - name: Upload NuGet packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./nuget-packages/
+        retention-days: 7
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      package_version: ${{ steps.version.outputs.package_version }}
+
+  test:
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Apply version to Directory.Build.props
+      run: |
+        $content = Get-Content src/Directory.Build.props
+        $content = $content -replace '~\(version\)~', '${{ needs.build.outputs.version }}'
+        $content | Out-File src/Directory.Build.props -Encoding utf8
+
+    - name: Restore dependencies
+      run: dotnet restore Accelergreat.sln
+
+    - name: Build solution
+      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+    - name: Run API tests
+      run: dotnet test tests/xunit/Accelergreat.Tests.Api/Accelergreat.Tests.Api.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx --collect:"XPlat Code Coverage"
+
+    - name: Run SQL Server tests (standard)
+      run: dotnet test tests/xunit/Accelergreat.Tests.EntityFramework.SqlServer/Accelergreat.Tests.EntityFramework.SqlServer.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx --collect:"XPlat Code Coverage"
+
+    - name: Run SQL Server tests (migrations)
+      run: dotnet test tests/Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase/Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx --collect:"XPlat Code Coverage"
+
+  documentation:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Apply version to Directory.Build.props
+      run: |
+        sed -i "s/~(version)~/${{ needs.build.outputs.version }}/g" src/Directory.Build.props
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Build documentation
+      run: docfx docfx.json
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: _site/
+        retention-days: 7
+
+    - name: Upload configuration schema
+      uses: actions/upload-artifact@v4
+      with:
+        name: configuration-schema
+        path: configuration/schema.json
+        retention-days: 7
+
+  deploy-nuget:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Download NuGet packages
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./nuget-packages
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Publish to NuGet
+      run: |
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
+
+  deploy-nuget-manual:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event_name == 'pull_request'
+    environment: nuget-manual
+    
+    steps:
+    - name: Download NuGet packages
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./nuget-packages
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Publish to NuGet (Manual)
+      run: |
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate

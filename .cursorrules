@@ -1,0 +1,38 @@
+## Version Management
+
+When updating the version.json file, follow these semantic versioning rules:
+
+### Version Format
+The version.json file should maintain this structure:
+```json
+{
+    "version": "MAJOR.MINOR.PATCH",
+    "major": MAJOR,
+    "minor": MINOR,
+    "patch": PATCH,
+    "prerelease": null
+}
+```
+
+### Version Increment Rules
+- **MAJOR version**: Increment when you make incompatible API changes
+- **MINOR version**: Increment when you add functionality in a backward compatible manner
+- **PATCH version**: Increment when you make backward compatible bug fixes
+- **PRERELEASE**: For preview versions, set to a string like "alpha", "beta", or "rc.1"
+
+### Examples:
+- Bug fix: 4.0.0 → 4.0.1
+- New feature: 4.0.1 → 4.1.0
+- Breaking change: 4.1.0 → 5.0.0
+- Prerelease: 4.0.0 → 4.1.0-alpha
+
+### When to Update:
+- Update version.json in PRs that will be merged to main
+- Always update all four fields: version, major, minor, patch
+- For prerelease versions, set the prerelease field to the appropriate value
+- For stable releases, ensure prerelease is null
+
+### GitHub Actions Integration:
+- The CI workflow automatically generates version suffixes for PR builds
+- Main branch builds use the exact version from version.json
+- NuGet packages are automatically versioned based on this file
