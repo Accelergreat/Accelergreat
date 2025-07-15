@@ -17,7 +17,7 @@ env:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
-    name: Deploy Both Docs and NuGet to Production
+    name: Deploy Docs then NuGet to Production
     
     steps:
     - name: Checkout code
@@ -79,16 +79,34 @@ jobs:
     - name: Install DocFX
       run: dotnet tool install -g docfx
 
-    - name: Build documentation
-      run: docfx docfx.json
-
-    - name: Deploy to NuGet
+    - name: Export DocFX template
       run: |
-        echo "Deploying NuGet packages..."
-        dotnet nuget push "./nuget-packages/*.nupkg" \
-          --api-key ${{ secrets.NUGET_API_KEY }} \
-          --source https://api.nuget.org/v3/index.json \
-          --skip-duplicate
+        echo "Creating template directory structure"
+        mkdir -p _exported_templates
+        echo "Exporting default template"
+        docfx template export default -o _exported_templates/accelergreat
+
+    - name: Build documentation
+      run: |
+        echo "Building documentation with DocFX"
+        docfx docfx.json --warningsAsErrors false
+        echo "DocFX build completed"
+
+    - name: Verify documentation build output
+      run: |
+        echo "Checking _site directory contents:"
+        if [ -d "_site" ]; then
+          echo "_site directory exists"
+          echo "Contents of _site:"
+          ls -la _site/
+          echo "Checking for index.html:"
+          find _site -name "index.html" -type f
+        else
+          echo "ERROR: _site directory does not exist!"
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        fi
 
     - name: Deploy to Azure Static Web Apps
       uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
@@ -100,4 +118,12 @@ jobs:
         output_location: ""
         skip_app_build: true
         production_branch: main
+
+    - name: Deploy to NuGet
+      run: |
+        echo "Deploying NuGet packages..."
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
 
