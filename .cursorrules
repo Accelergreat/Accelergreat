@@ -30,3 +30,20 @@ The version.json file should maintain this simple structure:
 - Main branch builds use the exact version from version.json
 - NuGet packages are automatically versioned based on this file
 - Version tokens (~(version)~) are automatically replaced in all files during build
+
+## Documentation and Communication Guidelines
+
+### Markdown File Creation:
+- **DO NOT** create markdown files for instructions, explanations, or documentation unless explicitly requested
+- **DO** use markdown formatting in chat responses to highlight important information
+- **DO** use proper formatting like **bold**, *italic*, `code`, and > blockquotes in chat
+- **DO** use tables, lists, and code blocks in chat responses for clarity
+- **AVOID** creating temporary documentation files that will need to be deleted later
+
+### Chat Communication:
+- Use clear formatting and highlighting in chat responses
+- Use ✅ checkmarks for completed tasks
+- Use ❌ for errors or issues
+- Use 🔧 for fixes or actions
+- Use 📋 for lists or summaries
+- Use 🎯 for key points or benefits
