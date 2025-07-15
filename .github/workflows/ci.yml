@@ -63,8 +63,16 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
         
+        # Debug output
+        echo "Generated version: ${VERSION}"
+        echo "Generated package version: ${PACKAGE_VERSION}"
+        
         # Create version replacement for token replacement
         sed -i "s/~(version)~/${VERSION}/g" src/Directory.Build.props
+        
+        # Show updated Directory.Build.props
+        echo "Updated Directory.Build.props:"
+        cat src/Directory.Build.props
     
     - name: Restore dependencies
       run: dotnet restore Accelergreat.sln
@@ -74,11 +82,28 @@ jobs:
 
     - name: Pack NuGet packages
       run: |
-        dotnet pack src/**/*.csproj \
-          --configuration ${{ env.BUILD_CONFIGURATION }} \
-          --no-build \
-          --output ./nuget-packages \
-          -p:PackageVersion=${{ steps.version.outputs.package_version }}
+        # Create output directory
+        mkdir -p ./nuget-packages
+        
+        # Show debug info
+        echo "Current directory: $(pwd)"
+        echo "Looking for projects in src/:"
+        find src/ -name "*.csproj" -type f
+        
+        # Pack each project individually using for loop to avoid subshell issues
+        for project in $(find src/ -name "*.csproj" -type f); do
+          echo "Packing project: $project"
+          dotnet pack "$project" \
+            --configuration ${{ env.BUILD_CONFIGURATION }} \
+            --output ./nuget-packages \
+            -p:PackageVersion=${{ steps.version.outputs.package_version }} \
+            -p:Version=${{ steps.version.outputs.package_version }} \
+            --verbosity normal
+        done
+        
+        # Show what was created
+        echo "Created packages:"
+        ls -la ./nuget-packages/ || echo "No packages directory found"
 
     - name: Upload NuGet packages
       uses: actions/upload-artifact@v4

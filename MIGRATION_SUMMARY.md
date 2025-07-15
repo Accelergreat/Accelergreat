@@ -125,6 +125,11 @@ Create these environments in repository settings:
 2. **Updated Azure Static Web Apps action**: Changed from `@v1` to specific commit hash for security
 3. **DocFX package name**: Confirmed correct (`docfx`)
 4. **Test paths**: Verified all test project paths are correct
+5. **NuGet packing**: Fixed glob pattern and version handling
+   - Changed from `src/**/*.csproj` glob to `find` command for better reliability
+   - Removed `--no-build` flag to ensure proper version replacement
+   - Added explicit version parameters: `-p:PackageVersion` and `-p:Version`
+   - Added debug output to troubleshoot packing issues
 
 ### Common Issues
 1. **Missing secrets**: Check repository secrets are configured
