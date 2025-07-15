@@ -33,8 +33,9 @@ The migration includes:
 
 **Features:**
 - Builds and deploys documentation to Azure Static Web Apps
-- Supports pull request previews
+- **Automatic PR preview sites** - Creates preview environments for pull requests
 - Automatic cleanup when PRs are closed
+- Uses DocFX to build documentation from source code and markdown files
 
 ## Required Secrets
 
@@ -95,42 +96,38 @@ The project now uses semantic versioning with `version.json`:
 ## Migration Changes
 
 ### From Azure DevOps
-- **Build Agent**: Windows-2022 → Ubuntu-latest (build), Windows-latest (tests)
+- **Build Agent**: Windows-2022 → Ubuntu-latest (build)
 - **Versioning**: Build number → Semantic versioning
+- **Version Replacement**: `replacetokens@4` → `find` + `sed` (same file patterns)
 - **Artifacts**: Azure DevOps artifacts → GitHub Actions artifacts
 - **Secrets**: Azure DevOps variables → GitHub Secrets
+- **Tests**: Removed (were disabled in original pipeline)
 
 ### Improvements
-- **Faster Builds**: Ubuntu for compilation, Windows only for tests
+- **Faster Builds**: Ubuntu for compilation (no Windows runners needed)
 - **Better Versioning**: Semantic versioning with automatic alpha builds
 - **Preview Deployments**: Documentation previews for PRs
-- **Cost Optimization**: Reduced Windows runner usage
+- **Cost Optimization**: Ubuntu-only runners for build and deployment
+- **Proper Token Replacement**: Fixed version replacement to match original behavior
 
 ## Testing
 
-### Tests Are Disabled by Default
-Following the original Azure DevOps pipeline configuration, **all tests are disabled by default** (`condition: false` in the original pipeline). This suggests the tests may have dependencies or issues that prevent them from running reliably in CI.
+### Tests Removed from Workflows
+Following the original Azure DevOps pipeline configuration where **all tests had `condition: false`**, the test jobs have been completely removed from the GitHub Actions workflows. This allows for a clean migration without test-related issues blocking the build process.
 
-### Enabling Tests
-To enable tests, set a repository variable:
-1. Go to repository **Settings** → **Variables** → **Actions**
-2. Add variable: `ENABLE_TESTS` with value `true`
+### Test Projects Available
+The following test projects are available in the repository and can be run manually:
+- `tests/xunit/Accelergreat.Tests.Api/` - API tests
+- `tests/xunit/Accelergreat.Tests.EntityFramework.SqlServer/` - SQL Server tests  
+- `tests/Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase/` - Migrations tests
+- `tests/xunit/Accelergreat.Tests.EntityFramework.PostgreSql/` - PostgreSQL tests
+- `tests/xunit/Accelergreat.Tests.EntityFramework.SqLite/` - SQLite tests
 
-### SQL Server Tests
-When enabled, tests requiring SQL Server run on Windows runners with automatic SQL Server setup:
-- `Accelergreat.Tests.EntityFramework.SqlServer`
-- `Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase`
-
-### Other Tests
-API tests run on Windows for consistency with the test environment.
-
-### Test Configuration
-- **SQL Server Setup**: Automatically installed using `ankane/setup-sqlserver@v1`
-- **Test Results**: Automatically uploaded as artifacts
-- **Deployment Logic**: 
-  - If tests are disabled: NuGet deployment proceeds after build
-  - If tests are enabled: NuGet deployment only happens if tests pass
-  - **Failing tests WILL block deployment** (as they should!)
+### Future Test Integration
+Tests can be reintegrated into the CI pipeline in the future by:
+1. Adding a test job to the CI workflow
+2. Setting up SQL Server dependencies for Windows runners
+3. Configuring proper test environments
 
 ## Deployment Strategy
 

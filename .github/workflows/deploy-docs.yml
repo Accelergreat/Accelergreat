@@ -68,8 +68,14 @@ jobs:
         
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         
-        # Create version replacement for token replacement
-        sed -i "s/~(version)~/${VERSION}/g" src/Directory.Build.props
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        echo "Replacing version tokens in all files..."
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${VERSION}/g" "$file"
+          fi
+        done
 
     - name: Restore dependencies
       run: dotnet restore Accelergreat.sln

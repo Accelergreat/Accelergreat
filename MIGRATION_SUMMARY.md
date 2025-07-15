@@ -131,12 +131,15 @@ Create these environments in repository settings:
    - Added explicit version parameters: `-p:PackageVersion` and `-p:Version`
    - Added debug output to troubleshoot packing issues
 
-6. **Test configuration**: Made tests conditional (disabled by default)
+6. **Test configuration**: Removed test jobs completely
    - Original Azure DevOps pipeline had `condition: false` for all tests
-   - Added `if: vars.ENABLE_TESTS == 'true'` to match original behavior
-   - Added SQL Server setup for Windows runners
-   - **Tests will fail the build when enabled** (as they should!)
-   - Deployment depends on tests passing (when tests are enabled)
+   - Tests removed from workflows to be revisited later
+   - Deployment no longer depends on test results
+
+7. **Version replacement**: Fixed to match original Azure DevOps behavior
+   - Now replaces `~(version)~` tokens in all `.json`, `.md`, and `.props` files
+   - Matches the original `replacetokens@4` task behavior
+   - Both CI and docs workflows use the same replacement logic
 
 ### Common Issues
 1. **Missing secrets**: Check repository secrets are configured
