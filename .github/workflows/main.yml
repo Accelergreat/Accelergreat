@@ -112,13 +112,13 @@ jobs:
         fi
 
     - name: Upload documentation artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: _site
 
     - name: Download documentation artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: documentation
         path: ./documentation
