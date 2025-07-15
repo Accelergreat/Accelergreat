@@ -1,0 +1,103 @@
+name: Deploy NuGet Packages (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  deploy-nuget:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    name: Deploy NuGet Packages
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+          9.0.x
+
+    - name: Generate version
+      id: version
+      run: |
+        # Read base version from version.json
+        BASE_VERSION=$(jq -r '.version' version.json)
+        
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          # For main branch, use the base version
+          VERSION="${BASE_VERSION}"
+        else
+          # For non-main branches, add pre-release suffix
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          VERSION="${BASE_VERSION}-beta.${SHORT_SHA}"
+        fi
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Deploying NuGet packages with version: ${VERSION}"
+        
+        # Replace version tokens in all files (matching original Azure DevOps pipeline)
+        echo "Replacing version tokens in all files..."
+        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
+          if grep -q "~(version)~" "$file"; then
+            echo "Replacing version in: $file"
+            sed -i "s/~(version)~/${VERSION}/g" "$file"
+          fi
+        done
+
+    - name: Restore dependencies
+      run: dotnet restore Accelergreat.sln
+
+    - name: Build solution
+      run: dotnet build Accelergreat.sln --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+    - name: Pack NuGet packages
+      run: |
+        # Create output directory
+        mkdir -p ./nuget-packages
+        
+        echo "Packing NuGet packages..."
+        for project in $(find src/ -name "*.csproj" -type f); do
+          echo "Packing project: $project"
+          dotnet pack "$project" \
+            --configuration ${{ env.BUILD_CONFIGURATION }} \
+            --output ./nuget-packages \
+            -p:PackageVersion=${{ steps.version.outputs.version }} \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --verbosity normal
+        done
+        
+        echo "Created packages:"
+        ls -la ./nuget-packages/
+
+    - name: Deploy to NuGet
+      run: |
+        dotnet nuget push "./nuget-packages/*.nupkg" \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
+

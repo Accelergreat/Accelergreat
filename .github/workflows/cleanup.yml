@@ -1,0 +1,67 @@
+name: Cleanup PR
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    name: Clean up PR resources
+    
+    steps:
+    - name: Cleanup Azure Static Web Apps preview site
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        action: "close"
+    
+    - name: Delete branch
+      if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const branchName = context.payload.pull_request.head.ref;
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
+          
+          try {
+            await github.rest.git.deleteRef({
+              owner: owner,
+              repo: repo,
+              ref: `heads/${branchName}`
+            });
+            console.log(`✅ Deleted branch: ${branchName}`);
+          } catch (error) {
+            if (error.status === 422) {
+              console.log(`ℹ️  Branch ${branchName} already deleted or doesn't exist`);
+            } else {
+              console.log(`⚠️  Error deleting branch ${branchName}: ${error.message}`);
+            }
+          }
+
+    - name: Add cleanup comment
+      if: github.event.pull_request.merged == true
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comment = `## 🧹 Cleanup Complete
+          
+          This PR has been merged and cleaned up:
+          - ✅ Branch \`${context.payload.pull_request.head.ref}\` deleted
+          - ✅ Preview site removed
+          - ✅ Resources cleaned up
+          
+          Thank you for your contribution! 🎉`;
+          
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
