@@ -1,0 +1,49 @@
+## Version Management
+
+When updating the version.json file, follow these semantic versioning rules:
+
+### Version Format
+The version.json file should maintain this simple structure:
+```json
+{
+    "version": "MAJOR.MINOR.PATCH"
+}
+```
+
+### Version Increment Rules
+- **MAJOR version**: Increment when you make incompatible API changes
+- **MINOR version**: Increment when you add functionality in a backward compatible manner
+- **PATCH version**: Increment when you make backward compatible bug fixes
+
+### Examples:
+- Bug fix: 4.0.0 → 4.0.1
+- New feature: 4.0.1 → 4.1.0
+- Breaking change: 4.1.0 → 5.0.0
+
+### When to Update:
+- Update version.json in PRs that will be merged to main
+- Version must be greater than the current main branch version
+- Format must be valid semantic versioning (MAJOR.MINOR.PATCH)
+
+### GitHub Actions Integration:
+- The CI workflow automatically generates version suffixes for PR builds (-alpha.{SHORT_SHA})
+- Main branch builds use the exact version from version.json
+- NuGet packages are automatically versioned based on this file
+- Version tokens (~(version)~) are automatically replaced in all files during build
+
+## Documentation and Communication Guidelines
+
+### Markdown File Creation:
+- **DO NOT** create markdown files for instructions, explanations, or documentation unless explicitly requested
+- **DO** use markdown formatting in chat responses to highlight important information
+- **DO** use proper formatting like **bold**, *italic*, `code`, and > blockquotes in chat
+- **DO** use tables, lists, and code blocks in chat responses for clarity
+- **AVOID** creating temporary documentation files that will need to be deleted later
+
+### Chat Communication:
+- Use clear formatting and highlighting in chat responses
+- Use ✅ checkmarks for completed tasks
+- Use ❌ for errors or issues
+- Use 🔧 for fixes or actions
+- Use 📋 for lists or summaries
+- Use 🎯 for key points or benefits
