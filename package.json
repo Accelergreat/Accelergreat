@@ -4,7 +4,7 @@
   "description": "Accelergreat Documentation Site",
   "scripts": {
     "build": "node build-docs.js && npm run copy-assets",
-    "copy-assets": "mkdir -p _site/styles && cp src/accelergreat_icon.png _site/ && cp favicon.ico _site/ 2>/dev/null || true",
+    "copy-assets": "mkdir -p _site/styles && cp accelergreat-logo.svg _site/ && cp favicon.ico _site/ 2>/dev/null || true",
     "clean": "rm -rf _site",
     "serve": "npx serve _site"
   },
