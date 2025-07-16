@@ -25,7 +25,7 @@ env:
 jobs:
   deploy-nuget:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment: ${{ github.event.inputs.environment || 'production' }}
     name: Deploy NuGet Packages
     
     steps:
