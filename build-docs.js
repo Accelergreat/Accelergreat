@@ -9,7 +9,6 @@ const MARKDOWN_FILES = ['index.md', 'components.md', 'microservices.md'];
 
 // Additional navigation items can be added here
 const EXTERNAL_LINKS = [
-  { title: 'API Reference', url: '/api/', external: false },
   { title: 'GitHub', url: 'https://github.com/Accelergreat/Accelergreat', external: true }
 ];
 
@@ -21,8 +20,28 @@ if (!fs.existsSync(path.join(OUTPUT_DIR, 'styles'))) {
   fs.mkdirSync(path.join(OUTPUT_DIR, 'styles'), { recursive: true });
 }
 
+// Renderer to add IDs to headings
+const renderer = new marked.Renderer();
+const originalHeadingRenderer = renderer.heading;
+renderer.heading = function(text, level) {
+  const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  return `<h${level} id="${id}">${text}</h${level}>`;
+};
+
+marked.setOptions({
+  renderer: renderer,
+  highlight: function(code, lang) {
+    if (lang) {
+      return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+    }
+    return `<pre><code>${escapeHtml(code)}</code></pre>`;
+  },
+  breaks: true,
+  gfm: true
+});
+
 // HTML template
-const htmlTemplate = (title, content, currentPage) => `<!DOCTYPE html>
+const htmlTemplate = (title, content, currentPage, toc) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -59,9 +78,14 @@ const htmlTemplate = (title, content, currentPage) => `<!DOCTYPE html>
         </nav>
     </header>
     
-    <main class="container">
-        <div class="content">
-            ${content}
+    <main class="main-wrapper">
+        <div class="container">
+            <div class="content-wrapper">
+                <div class="content">
+                    ${content}
+                </div>
+                ${toc ? `<aside class="sidebar-right">${toc}</aside>` : ''}
+            </div>
         </div>
     </main>
     
@@ -75,20 +99,55 @@ const htmlTemplate = (title, content, currentPage) => `<!DOCTYPE html>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    
+    <script>
+    // Table of Contents scroll spy
+    document.addEventListener('DOMContentLoaded', function() {
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const headings = document.querySelectorAll('h2[id], h3[id], h4[id]');
+        
+        function updateActiveLink() {
+            let current = '';
+            const scrollPosition = window.scrollY + 100;
+            
+            headings.forEach(heading => {
+                const rect = heading.getBoundingClientRect();
+                if (rect.top + window.scrollY <= scrollPosition) {
+                    current = heading.id;
+                }
+            });
+            
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // Smooth scrolling for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        window.addEventListener('scroll', updateActiveLink);
+        updateActiveLink(); // Initial call
+    });
+    </script>
 </body>
 </html>`;
 
-// Configure marked
-marked.setOptions({
-  highlight: function(code, lang) {
-    if (lang) {
-      return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
-    }
-    return `<pre><code>${escapeHtml(code)}</code></pre>`;
-  },
-  breaks: true,
-  gfm: true
-});
+
 
 function escapeHtml(text) {
   const map = {
@@ -99,6 +158,39 @@ function escapeHtml(text) {
     "'": '&#039;'
   };
   return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Extract headings for table of contents
+function extractHeadings(content) {
+  const headings = [];
+  const headingRegex = /^(#{2,4})\s+(.+)$/gm;
+  let match;
+  
+  while ((match = headingRegex.exec(content)) !== null) {
+    const level = match[1].length;
+    const text = match[2].trim();
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    headings.push({ level, text, id });
+  }
+  
+  return headings;
+}
+
+// Generate TOC HTML
+function generateTOC(headings) {
+  if (headings.length === 0) return '';
+  
+  let html = '<nav class="toc">\n<h3>In This Article</h3>\n<ul class="toc-list">\n';
+  
+  headings.forEach(heading => {
+    const indent = heading.level - 2;
+    html += `<li class="toc-item toc-level-${heading.level}" style="padding-left: ${indent * 1}rem;">
+      <a href="#${heading.id}" class="toc-link">${heading.text}</a>
+    </li>\n`;
+  });
+  
+  html += '</ul>\n</nav>';
+  return html;
 }
 
 // Process markdown files
@@ -116,6 +208,10 @@ MARKDOWN_FILES.forEach(file => {
     // Remove YAML frontmatter if present
     content = content.replace(/^---[\s\S]*?---\n*/m, '');
     
+    // Extract headings for TOC
+    const headings = extractHeadings(content);
+    const toc = generateTOC(headings);
+    
     // Convert markdown to HTML
     const htmlContent = marked.marked ? marked.marked(content) : marked(content);
     
@@ -125,7 +221,7 @@ MARKDOWN_FILES.forEach(file => {
     
     // Generate full HTML
     const currentPage = path.basename(file, '.md');
-    const fullHtml = htmlTemplate(title, htmlContent, currentPage);
+    const fullHtml = htmlTemplate(title, htmlContent, currentPage, toc);
     
     // Write output
     fs.writeFileSync(outputPath, fullHtml);
@@ -276,14 +372,97 @@ header {
 }
 
 /* Main content */
-main {
+.main-wrapper {
   min-height: calc(100vh - 200px);
   padding: var(--spacing-xxl) 0;
 }
 
+.content-wrapper {
+  display: flex;
+  gap: var(--spacing-xxl);
+  align-items: flex-start;
+}
+
 .content {
+  flex: 1;
   max-width: 900px;
-  margin: 0 auto;
+  min-width: 0;
+}
+
+/* Table of Contents Sidebar */
+.sidebar-right {
+  position: sticky;
+  top: calc(60px + var(--spacing-xl));
+  width: 250px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-left: var(--spacing-lg);
+  border-left: 1px solid var(--border-color);
+}
+
+.toc {
+  padding: 0;
+}
+
+.toc h3 {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-item {
+  margin-bottom: var(--spacing-xs);
+}
+
+.toc-link {
+  display: block;
+  padding: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  border-left: 2px solid transparent;
+  padding-left: var(--spacing-sm);
+  margin-left: -2px;
+  transition: all 0.2s ease;
+}
+
+.toc-link:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.toc-link.active {
+  color: var(--primary-color);
+  border-left-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.toc-level-3 {
+  font-size: 0.813rem;
+}
+
+.toc-level-4 {
+  font-size: 0.75rem;
+}
+
+/* Hide TOC on smaller screens */
+@media (max-width: 1200px) {
+  .sidebar-right {
+    display: none;
+  }
+  
+  .content {
+    max-width: 100%;
+  }
 }
 
 /* Typography */
