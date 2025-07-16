@@ -78,7 +78,7 @@ jobs:
           
           # Check if assets were copied
           echo "Checking for assets:"
-          ls -la _site/accelergreat_icon.png _site/favicon.ico _site/styles/main.css || true
+          ls -la _site/accelergreat-logo.svg _site/favicon.ico _site/styles/main.css || true
         else
           echo "ERROR: _site directory does not exist!"
           exit 1

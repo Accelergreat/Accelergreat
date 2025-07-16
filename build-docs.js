@@ -55,10 +55,9 @@ const htmlTemplate = (title, content, currentPage, toc) => `<!DOCTYPE html>
     <header>
         <nav class="navbar">
             <div class="container">
-                <div class="navbar-brand">
-                    <img src="/accelergreat_icon.png" alt="Accelergreat" class="logo">
-                    <span class="brand-text">Accelergreat</span>
-                </div>
+                <a href="/" class="navbar-brand">
+                    <img src="/accelergreat-logo.svg" alt="Accelergreat" class="logo">
+                </a>
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a href="/" class="nav-link ${currentPage === 'index' ? 'active' : ''}">Home</a>
@@ -318,20 +317,12 @@ header {
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
   text-decoration: none;
-  color: var(--text-primary);
 }
 
 .navbar-brand .logo {
-  height: 40px;
-  width: 40px;
-}
-
-.brand-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
+  height: 45px;
+  width: auto;
 }
 
 .navbar-nav {
