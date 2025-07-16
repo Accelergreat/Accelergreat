@@ -1,10 +1,12 @@
-name: Deploy Documentation (Manual)
+name: Deploy Documentation
 
 # This workflow deploys documentation to Azure Static Web Apps
 # - Main branch: Deploys to production (https://docs.accelergreat.net)
 # - Other branches: Automatically creates preview environments
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:

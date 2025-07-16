@@ -126,8 +126,13 @@ jobs:
           fi
         done
 
-    - name: Install DocFX
-      run: dotnet tool install -g docfx
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm install
 
     - name: Build documentation
-      run: docfx docfx.json
+      run: npm run build
