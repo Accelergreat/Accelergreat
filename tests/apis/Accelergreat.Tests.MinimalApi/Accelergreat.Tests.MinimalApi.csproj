@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Accelergreat.Tests.MinimalApiTests" />
+    <InternalsVisibleTo Include="Accelergreat.Tests.MinimalApiTests.Xunit3" />
   </ItemGroup>
 
 </Project>

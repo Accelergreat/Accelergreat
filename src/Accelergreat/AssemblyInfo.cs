@@ -19,3 +19,4 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Accelergreat.EntityFramework.SqlServer")]
 [assembly: InternalsVisibleTo("Accelergreat.Xunit")]
+[assembly: InternalsVisibleTo("Accelergreat.Xunit3")]

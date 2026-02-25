@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Accelergreat.Environments.Pooling;
 using Accelergreat.Tests.EntityFramework.Relational.AdventureWorks.Models;
