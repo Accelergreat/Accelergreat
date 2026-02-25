@@ -72,7 +72,7 @@ Add references to all your microservice projects:
 </Project>
 ```
 
-### 2. Aliases for Minimal APIs (.NET 6+)
+### 2. Aliases for Minimal APIs (.NET 8+)
 For projects using minimal APIs, add aliases to avoid naming conflicts:
 
 ```xml

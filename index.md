@@ -94,7 +94,7 @@ That's it! Your tests now run in parallel with ultra-fast database resets.
 
 ## 🏗️ NuGet Packages
 
-[![NuGet](https://img.shields.io/badge/nuget-v4.0.0-blue)](https://www.nuget.org/profiles/Nanogunn) ![.NET](https://img.shields.io/badge/.NET-6%20%7C%207%20%7C%208%20%7C%209-purple)
+[![NuGet](https://img.shields.io/badge/nuget-v5.0.0-blue)](https://www.nuget.org/profiles/Nanogunn) ![.NET](https://img.shields.io/badge/.NET-8%20%7C%209%20%7C%2010-purple)
 
 ### Core Packages
 | Package | Description |
@@ -114,7 +114,7 @@ That's it! Your tests now run in parallel with ultra-fast database resets.
 |------|---------|
 | **Web APIs** | [Accelergreat.Web](https://www.nuget.org/packages/Accelergreat.Web) |
 
-> **✨ New in v4.0**: Full .NET 9 support, enhanced performance, improved diagnostics
+> **✨ New in v4.0**: Full .NET 9/10 support, enhanced performance, improved diagnostics
 
 ---
 
@@ -177,7 +177,7 @@ public class OrderApiComponent : WebAppComponent<OrderApi.Startup>
 }
 ```
 
-#### Modern .NET 6+ Program.cs Support
+#### Modern .NET 8+ Program.cs Support
 ```csharp
 public class OrderApiComponent : WebAppComponent<Program>
 {

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <PackageId>Accelergreat.EntityFramework.SqlServer</PackageId>
     <PackageDescription>Accelergreat Sql Server Entity Framework testing tools. Accelergreat is an integration testing package that helps to simplify and speed up the writing of integration tests, as well as taking away the challenging task of managing external dependencies.</PackageDescription>
     <PackageTags>Integration;Testing;IntegrationTesting;Entity;Framework;EntityFramework;Sql;Server;SqlServer;Accelergreat</PackageTags>
