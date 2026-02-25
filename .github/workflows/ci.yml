@@ -97,32 +97,3 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       package_version: ${{ steps.version.outputs.package_version }}
-
-  documentation:
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Apply version to files
-      run: |
-        # Replace version tokens in all files (matching original Azure DevOps pipeline)
-        find . -name "*.json" -o -name "*.md" -o -name "*.props" | while read file; do
-          if grep -q "~(version)~" "$file"; then
-            echo "Replacing version in: $file"
-            sed -i "s/~(version)~/${{ needs.build.outputs.version }}/g" "$file"
-          fi
-        done
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Build documentation
-      run: npm run build
