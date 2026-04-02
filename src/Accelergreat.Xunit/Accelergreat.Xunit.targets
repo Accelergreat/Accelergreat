@@ -7,4 +7,38 @@
 		  <AssemblyAttribute Include="Accelergreat.Xunit.Attributes.UseAccelergreatXunitTestFramework" />
 		</ItemGroup>
 	</Target>
+
+	<!--
+	  CopyAccelergreatAgentFiles: copies AI coding agent context files (AGENTS.md, CLAUDE.md, .cursorrules)
+	  from the NuGet package into the consumer's solution root the first time they build. Files are never
+	  overwritten if they already exist — the consumer owns them once copied.
+	-->
+	<Target Name="CopyAccelergreatAgentFiles" AfterTargets="Build">
+		<PropertyGroup>
+			<!-- Resolve to the solution root directory. Falls back to project root if SolutionDir is not set. -->
+			<_AccelergreatDestDir Condition="'$(SolutionDir)' != '' And '$(SolutionDir)' != '*Undefined*'">$(SolutionDir)</_AccelergreatDestDir>
+			<_AccelergreatDestDir Condition="'$(_AccelergreatDestDir)' == ''">$(MSBuildProjectDirectory)</_AccelergreatDestDir>
+			<!-- The package's build directory (where this .targets file lives) -->
+			<_AccelergreatPkgBuildDir>$(MSBuildThisFileDirectory)</_AccelergreatPkgBuildDir>
+		</PropertyGroup>
+
+		<Copy SourceFiles="$(_AccelergreatPkgBuildDir)AGENTS.md"
+		      DestinationFiles="$(_AccelergreatDestDir)AGENTS.md"
+		      Condition="!Exists('$(_AccelergreatDestDir)AGENTS.md')"
+		      OverwriteReadOnlyFiles="false" />
+
+		<Copy SourceFiles="$(_AccelergreatPkgBuildDir)CLAUDE.md"
+		      DestinationFiles="$(_AccelergreatDestDir)CLAUDE.md"
+		      Condition="!Exists('$(_AccelergreatDestDir)CLAUDE.md')"
+		      OverwriteReadOnlyFiles="false" />
+
+		<Copy SourceFiles="$(_AccelergreatPkgBuildDir).cursorrules"
+		      DestinationFiles="$(_AccelergreatDestDir).cursorrules"
+		      Condition="!Exists('$(_AccelergreatDestDir).cursorrules')"
+		      OverwriteReadOnlyFiles="false" />
+
+		<Message Importance="high"
+		         Text="[Accelergreat] AI coding agent context files are available in your solution root (AGENTS.md, CLAUDE.md, .cursorrules). See https://github.com/Accelergreat/Accelergreat for details."
+		         Condition="!Exists('$(_AccelergreatDestDir)AGENTS.md') Or !Exists('$(_AccelergreatDestDir)CLAUDE.md') Or !Exists('$(_AccelergreatDestDir).cursorrules')" />
+	</Target>
 </Project>

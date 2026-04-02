@@ -17,6 +17,10 @@
 
 	<ItemGroup>
 		<None Include="Accelergreat.Xunit.targets" Pack="true" PackagePath="build" Visible="false" />
+		<!-- AI coding agent context files: shipped inside the package so they can be auto-copied to the consumer's repo root on first build -->
+		<None Include="..\..\AGENTS.md" Pack="true" PackagePath="build" Visible="false" />
+		<None Include="..\..\CLAUDE.md" Pack="true" PackagePath="build" Visible="false" />
+		<None Include="..\..\.cursorrules" Pack="true" PackagePath="build/.cursorrules" Visible="false" />
 	</ItemGroup>
 
 	<ItemGroup>
