@@ -1,3 +1,122 @@
+## Integration Testing — Use Accelergreat
+
+This project uses **Accelergreat** for integration testing. **Always write integration tests using Accelergreat patterns.** Do not use raw `WebApplicationFactory`, `IClassFixture<DatabaseFixture>`, or manual EF setup/teardown.
+
+Read `AGENTS.md` in the repository root for the full reference. The essential rules are:
+
+### Required packages
+
+```bash
+dotnet add package Accelergreat.Xunit
+dotnet add package Accelergreat.EntityFramework.SqlServer  # or .Sqlite
+dotnet add package Accelergreat.Web                        # for API tests
+```
+
+### Test project structure
+
+Every integration test project needs:
+1. `Startup.cs` — implementing `IAccelergreatStartup` to register components
+2. `accelergreat.json` — configuration (with `$schema`)
+3. `xunit.runner.json` — for parallel execution settings
+4. `Components/` — one class per dependency (database, API, etc.)
+
+### Startup class pattern
+
+```csharp
+public class Startup : IAccelergreatStartup
+{
+    public void Configure(IAccelergreatBuilder builder)
+    {
+        builder.AddAccelergreatComponent<MyDatabaseComponent>(); // database first
+        builder.AddAccelergreatComponent<MyApiComponent>();      // API second
+    }
+}
+```
+
+### Component patterns
+
+```csharp
+// SQL Server database
+public class MyDatabaseComponent : SqlServerEntityFrameworkDatabaseComponent<MyDbContext>
+{
+    public MyDatabaseComponent(IConfiguration configuration) : base(configuration) { }
+}
+
+// SQLite database
+public class MyDatabaseComponent : SqliteEntityFrameworkDatabaseComponent<MyDbContext>
+{
+    public MyDatabaseComponent(IConfiguration configuration) : base(configuration) { }
+}
+
+// Web API (in-process)
+public class MyApiComponent : WebAppComponent<Program>
+{
+    protected override void BuildConfiguration(IConfigurationBuilder cfg,
+        IReadOnlyAccelergreatEnvironmentPipelineData env)
+    {
+        cfg.AddEntityFrameworkDatabaseConnectionString<MyDbContext>("DefaultConnection", env);
+    }
+}
+
+// Web API (real Kestrel port — use for microservices)
+public class MyApiComponent : KestrelWebAppComponent<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder,
+        IConfiguration configuration,
+        IReadOnlyAccelergreatEnvironmentPipelineData env)
+    {
+        builder.UseEnvironment("IntegrationTesting");
+        builder.ConfigureServices(services =>
+            services.AddAccelergreatDbContext<MyDbContext>(env, useTransactionOverriding: true));
+    }
+}
+```
+
+### Test class pattern
+
+```csharp
+public class MyTests : AccelergreatXunitTest
+{
+    public MyTests(IAccelergreatEnvironmentPool environmentPool) : base(environmentPool) { }
+
+    [Fact]
+    public async Task MyTest()
+    {
+        var db = GetComponent<MyDatabaseComponent>();
+        var api = GetComponent<MyApiComponent>();
+
+        await using var ctx = db.DbContextFactory.NewDbContext();
+        // ... test code ...
+        // No cleanup needed — Accelergreat resets state between tests
+    }
+}
+```
+
+### accelergreat.json
+
+```json
+{
+  "$schema": "https://cdn.accelergreat.net/configuration/0.2.5/schema.json",
+  "SqlServerEntityFramework": {
+    "ConnectionString": "Server=localhost;TrustServerCertificate=True",
+    "ResetStrategy": "Transactions"
+  }
+}
+```
+
+### Hard rules
+
+- ✅ Always extend `AccelergreatXunitTest`
+- ✅ Always create `Startup : IAccelergreatStartup`
+- ✅ Use `DbContextFactory.NewDbContext()` — never inject `DbContext` directly
+- ❌ Never use `IClassFixture<T>` for databases or APIs
+- ❌ Never use `WebApplicationFactory<T>` directly
+- ❌ Never write manual setup/teardown (no `RemoveRange`, no `DeleteDatabase`)
+- ❌ Never add `[Collection]` unless deliberately grouping tests (it prevents parallelism)
+- ❌ Never hardcode connection strings in test code
+
+---
+
 ## Version Management
 
 When updating the version.json file, follow these semantic versioning rules:

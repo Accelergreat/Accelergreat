@@ -221,6 +221,24 @@ dotnet build Accelergreat.sln
 dotnet test Accelergreat.sln -m:1
 ```
 
+## Using AI coding tools with Accelergreat
+
+Accelergreat ships three AI coding agent context files inside the `Accelergreat.Xunit` and `Accelergreat.Xunit3` NuGet packages:
+
+| File | Used by |
+|---|---|
+| `AGENTS.md` | Claude Code, OpenClaw, OpenAI Codex CLI — full reference for Accelergreat patterns |
+| `CLAUDE.md` | Claude Code / OpenClaw — compact quickstart that points to `AGENTS.md` |
+| `.cursorrules` | Cursor AI — rules prepended to every request so Cursor writes idiomatic tests |
+
+**How it works:** When you build your project for the first time after adding `Accelergreat.Xunit` or `Accelergreat.Xunit3`, MSBuild automatically copies these files into your solution root (if they don't already exist there). Your AI tool picks them up from there — no extra configuration required.
+
+**Already have these files?** No problem. The copy only runs when the files are absent — it will never overwrite your customised versions.
+
+**Working in this repo?** The files are already here. Open the repo in Cursor or run Claude Code in it and the tools load them automatically.
+
+---
+
 ## Troubleshooting
 
 - **Tests cannot resolve `IAccelergreatEnvironmentPool`**
