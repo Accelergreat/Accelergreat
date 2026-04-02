@@ -16,14 +16,23 @@ Install the packages you need:
 
 | Package | Purpose |
 |---|---|
-| `Accelergreat.Xunit` | Core xUnit integration (always required) |
+| `Accelergreat.Xunit` | Core xUnit 2 integration |
+| `Accelergreat.Xunit3` | Core xUnit 3 integration (use instead of `Accelergreat.Xunit` for xunit.v3) |
 | `Accelergreat` | Base package for custom components |
 | `Accelergreat.EntityFramework.SqlServer` | SQL Server + Entity Framework support |
 | `Accelergreat.EntityFramework.Sqlite` | SQLite + Entity Framework support |
 | `Accelergreat.Web` | Web API test hosting (`WebAppComponent`, `KestrelWebAppComponent`) |
 
+**xUnit 2:**
 ```bash
 dotnet add package Accelergreat.Xunit
+dotnet add package Accelergreat.EntityFramework.SqlServer   # or Sqlite
+dotnet add package Accelergreat.Web                         # if testing web APIs
+```
+
+**xUnit 3:**
+```bash
+dotnet add package Accelergreat.Xunit3
 dotnet add package Accelergreat.EntityFramework.SqlServer   # or Sqlite
 dotnet add package Accelergreat.Web                         # if testing web APIs
 ```
