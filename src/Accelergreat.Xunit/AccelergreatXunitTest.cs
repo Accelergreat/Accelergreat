@@ -1,14 +1,13 @@
-﻿using Accelergreat.Components;
+using Accelergreat.Components;
 using Accelergreat.Environments;
 using Accelergreat.Environments.Pooling;
-using Xunit;
 
 namespace Accelergreat.Xunit;
 
 /// <summary>
 /// Base class for an Accelergreat Xunit tests
 /// </summary>
-public abstract class AccelergreatXunitTest : IAsyncLifetime
+public abstract partial class AccelergreatXunitTest
 {
     private readonly IAccelergreatEnvironmentPool _environmentPool;
     private IAccelergreatEnvironment? _environment;
@@ -56,13 +55,13 @@ public abstract class AccelergreatXunitTest : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    async Task IAsyncLifetime.InitializeAsync()
+    protected async Task InitializeEnvironmentAsync()
     {
         _environment = await _environmentPool.RentAsync();
         await InitializeAsync();
     }
 
-    async Task IAsyncLifetime.DisposeAsync()
+    protected async Task DisposeEnvironmentAsync()
     {
         await DisposeAsync();
 

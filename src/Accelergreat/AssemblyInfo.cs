@@ -17,6 +17,6 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("12abaa9c-ac20-499b-8358-81b4ffb03980")]
 
-[assembly: InternalsVisibleTo("Accelergreat.EntityFramework.PostgreSql")]
 [assembly: InternalsVisibleTo("Accelergreat.EntityFramework.SqlServer")]
 [assembly: InternalsVisibleTo("Accelergreat.Xunit")]
+[assembly: InternalsVisibleTo("Accelergreat.Xunit3")]

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Accelergreat.Environments.Pooling;
 using Accelergreat.Tests.EntityFramework.SqlServer.Migrations.Components;
 using Accelergreat.Tests.EntityFramework.SqlServer.MigrationsDatabase;
