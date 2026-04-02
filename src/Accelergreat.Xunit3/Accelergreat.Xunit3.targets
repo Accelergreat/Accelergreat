@@ -1,0 +1,10 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);xUnit1041</NoWarn>
+  </PropertyGroup>
+  <Target Name="AddUseAccelergreatXunit3TestFrameworkAttribute" BeforeTargets="BeforeCompile">
+    <ItemGroup>
+      <AssemblyAttribute Include="Accelergreat.Xunit.Attributes.UseAccelergreatXunit3TestFramework" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Threading.Tasks;
 using Accelergreat.Environments.Pooling;
 using Accelergreat.Tests.Api.Components;
