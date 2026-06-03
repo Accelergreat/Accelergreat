@@ -24,17 +24,17 @@
 
     <Copy SourceFiles="$(_AccelergreatPkgBuildDir)AGENTS.md"
           DestinationFiles="$(_AccelergreatDestDir)AGENTS.md"
-          Condition="!Exists('$(_AccelergreatDestDir)AGENTS.md')"
+          Condition="Exists('$(_AccelergreatPkgBuildDir)AGENTS.md') And !Exists('$(_AccelergreatDestDir)AGENTS.md')"
           OverwriteReadOnlyFiles="false" />
 
     <Copy SourceFiles="$(_AccelergreatPkgBuildDir)CLAUDE.md"
           DestinationFiles="$(_AccelergreatDestDir)CLAUDE.md"
-          Condition="!Exists('$(_AccelergreatDestDir)CLAUDE.md')"
+          Condition="Exists('$(_AccelergreatPkgBuildDir)CLAUDE.md') And !Exists('$(_AccelergreatDestDir)CLAUDE.md')"
           OverwriteReadOnlyFiles="false" />
 
     <Copy SourceFiles="$(_AccelergreatPkgBuildDir).cursorrules"
           DestinationFiles="$(_AccelergreatDestDir).cursorrules"
-          Condition="!Exists('$(_AccelergreatDestDir).cursorrules')"
+          Condition="Exists('$(_AccelergreatPkgBuildDir).cursorrules') And !Exists('$(_AccelergreatDestDir).cursorrules')"
           OverwriteReadOnlyFiles="false" />
 
     <Message Importance="high"
