@@ -107,11 +107,13 @@ The test shape remains the same (constructor with `IAccelergreatEnvironmentPool`
   <ItemGroup>
     <PackageReference Include="Accelergreat.Xunit3" Version="~(version)~" />
     <PackageReference Include="Accelergreat.EntityFramework.SqlServer" Version="~(version)~" />
-    <PackageReference Include="xunit.v3" Version="4.*" />
+    <PackageReference Include="xunit.v3.mtp-off" Version="4.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
   </ItemGroup>
 </Project>
 ```
+
+xUnit v3 4.0 defaults to Microsoft Testing Platform. Accelergreat.Xunit3 uses a custom VSTest test framework, so reference `xunit.v3.mtp-off` rather than `xunit.v3` when running tests with `dotnet test`.
 
 ## End-to-end example
 
