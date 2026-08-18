@@ -45,19 +45,20 @@ internal sealed class AccelergreatXunitTestCollectionRunner : XunitTestCollectio
 
     protected override ValueTask<RunSummary> RunTestClass(
         XunitTestCollectionRunnerContext ctxt,
-        IXunitTestClass testClass,
+        IXunitTestClass? testClass,
         IReadOnlyCollection<IXunitTestCase> testCases)
     {
         var classRunner = new AccelergreatXunitTestClassRunner(_serviceScope!, _logger);
 
         return classRunner.Run(
-            testClass,
+            testClass!,
             testCases,
             ctxt.ExplicitOption,
             ctxt.MessageBus,
-            ctxt.TestCaseOrderer,
             ctxt.Aggregator.Clone(),
             ctxt.CancellationTokenSource,
+            ctxt.ParallelMode,
+            ctxt.Scheduler,
             ctxt.CollectionFixtureMappings);
     }
 

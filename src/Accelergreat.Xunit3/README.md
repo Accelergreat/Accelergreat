@@ -21,8 +21,8 @@ dotnet add package Accelergreat.Xunit3
 
   <ItemGroup>
     <PackageReference Include="Accelergreat.Xunit3" Version="~(version)~" />
-    <PackageReference Include="xunit.v3" Version="3.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.v3" Version="4.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
   </ItemGroup>
 </Project>
 ```

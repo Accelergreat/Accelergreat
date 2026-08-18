@@ -89,8 +89,8 @@ The test shape remains the same (constructor with `IAccelergreatEnvironmentPool`
     <PackageReference Include="Accelergreat.Xunit" Version="~(version)~" />
     <PackageReference Include="Accelergreat.EntityFramework.SqlServer" Version="~(version)~" />
     <PackageReference Include="xunit" Version="2.*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
   </ItemGroup>
 </Project>
 ```
@@ -107,8 +107,8 @@ The test shape remains the same (constructor with `IAccelergreatEnvironmentPool`
   <ItemGroup>
     <PackageReference Include="Accelergreat.Xunit3" Version="~(version)~" />
     <PackageReference Include="Accelergreat.EntityFramework.SqlServer" Version="~(version)~" />
-    <PackageReference Include="xunit.v3" Version="3.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.v3" Version="4.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
   </ItemGroup>
 </Project>
 ```

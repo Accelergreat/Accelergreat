@@ -44,7 +44,7 @@ internal sealed class DiagnosticMessageLogger : ILogger
 
         if (exception is not null)
         {
-            _executionMessageSink.OnMessage(ErrorMessage.FromException(exception));
+            _executionMessageSink.OnMessage(ErrorMessage.FromException(exception, assemblyUniqueID: null));
         }
         else
         {
