@@ -48,10 +48,17 @@ internal sealed class AccelergreatXunitTestCollectionRunner : XunitTestCollectio
         IXunitTestClass? testClass,
         IReadOnlyCollection<IXunitTestCase> testCases)
     {
+        if (testClass is null)
+        {
+            // Class-less test cases (e.g. discovery error cases) cannot use the Accelergreat
+            // class runner; let xUnit fail them gracefully instead of crashing the run.
+            return base.RunTestClass(ctxt, testClass, testCases);
+        }
+
         var classRunner = new AccelergreatXunitTestClassRunner(_serviceScope!, _logger);
 
         return classRunner.Run(
-            testClass!,
+            testClass,
             testCases,
             ctxt.ExplicitOption,
             ctxt.MessageBus,

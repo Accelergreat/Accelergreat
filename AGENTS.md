@@ -33,9 +33,13 @@ dotnet add package Accelergreat.Web                         # if testing web API
 **xUnit 3:**
 ```bash
 dotnet add package Accelergreat.Xunit3
+dotnet add package xunit.v3.mtp-off                         # NOT xunit.v3 — see note below
+dotnet add package Microsoft.NET.Test.Sdk
 dotnet add package Accelergreat.EntityFramework.SqlServer   # or Sqlite
 dotnet add package Accelergreat.Web                         # if testing web APIs
 ```
+
+> **Important:** xUnit v3 4.0 defaults to Microsoft Testing Platform (MTP). Accelergreat.Xunit3 uses a custom VSTest test framework, so xUnit 3 test projects must reference `xunit.v3.mtp-off` (not `xunit.v3`) alongside `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio` to keep `dotnet test` on VSTest.
 
 ---
 
