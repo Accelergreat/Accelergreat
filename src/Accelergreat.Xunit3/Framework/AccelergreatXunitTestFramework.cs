@@ -8,6 +8,6 @@ public sealed class AccelergreatXunitTestFramework : XunitTestFramework
 {
     protected override ITestFrameworkExecutor CreateExecutor(Assembly assembly)
     {
-        return new AccelergreatXunitTestFrameworkExecutor(new XunitTestAssembly(assembly, null, assembly.GetName().Version, null));
+        return new AccelergreatXunitTestFrameworkExecutor(new XunitTestAssembly(assembly, configFilePath: null));
     }
 }

@@ -45,9 +45,16 @@ internal sealed class AccelergreatXunitTestCollectionRunner : XunitTestCollectio
 
     protected override ValueTask<RunSummary> RunTestClass(
         XunitTestCollectionRunnerContext ctxt,
-        IXunitTestClass testClass,
+        IXunitTestClass? testClass,
         IReadOnlyCollection<IXunitTestCase> testCases)
     {
+        if (testClass is null)
+        {
+            // Class-less test cases (e.g. discovery error cases) cannot use the Accelergreat
+            // class runner; let xUnit fail them gracefully instead of crashing the run.
+            return base.RunTestClass(ctxt, testClass, testCases);
+        }
+
         var classRunner = new AccelergreatXunitTestClassRunner(_serviceScope!, _logger);
 
         return classRunner.Run(
@@ -55,9 +62,10 @@ internal sealed class AccelergreatXunitTestCollectionRunner : XunitTestCollectio
             testCases,
             ctxt.ExplicitOption,
             ctxt.MessageBus,
-            ctxt.TestCaseOrderer,
             ctxt.Aggregator.Clone(),
             ctxt.CancellationTokenSource,
+            ctxt.ParallelMode,
+            ctxt.Scheduler,
             ctxt.CollectionFixtureMappings);
     }
 

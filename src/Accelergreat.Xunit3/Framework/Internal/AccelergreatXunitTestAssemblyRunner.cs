@@ -71,9 +71,10 @@ internal sealed class AccelergreatXunitTestAssemblyRunner : XunitTestAssemblyRun
             testCases,
             ctxt.ExplicitOption,
             ctxt.MessageBus,
-            ctxt.AssemblyTestCaseOrderer ?? DefaultTestCaseOrderer.Instance,
             ctxt.Aggregator.Clone(),
             ctxt.CancellationTokenSource,
+            ctxt.ParallelMode,
+            ctxt.Scheduler,
             ctxt.AssemblyFixtureMappings);
     }
 
@@ -102,7 +103,7 @@ internal sealed class AccelergreatXunitTestAssemblyRunner : XunitTestAssemblyRun
 
     private static bool CanExecuteParallel(IAccelergreatXunitExecutionContext executionContext)
     {
-        if (executionContext.ExecutionOptions.DisableParallelization() ?? false)
+        if (executionContext.ExecutionOptions.ParallelMode() == ParallelMode.None)
         {
             return false;
         }

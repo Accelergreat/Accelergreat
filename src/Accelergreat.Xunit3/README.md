@@ -21,11 +21,13 @@ dotnet add package Accelergreat.Xunit3
 
   <ItemGroup>
     <PackageReference Include="Accelergreat.Xunit3" Version="~(version)~" />
-    <PackageReference Include="xunit.v3" Version="3.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit.v3.mtp-off" Version="4.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
   </ItemGroup>
 </Project>
 ```
+
+xUnit v3 4.0 defaults to Microsoft Testing Platform. Accelergreat.Xunit3 uses a custom VSTest test framework, so test projects should reference `xunit.v3.mtp-off` (not `xunit.v3`) to keep `dotnet test` on VSTest.
 
 ## What you get
 
